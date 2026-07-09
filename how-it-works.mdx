@@ -8,23 +8,33 @@ Handshake is built around a single idea: when you switch agents, you should not 
 
 ## The daemon
 
-Handshake runs as a persistent background process, installed as a launchd login agent on macOS or a systemd user service on Linux. The daemon listens on `localhost:8765` and exposes three HTTP endpoints:
+Handshake runs as a persistent background process, installed as a launchd login agent on macOS or a systemd user service on Linux. The daemon listens on `localhost:8765` and exposes five HTTP endpoints:
 
 - **`/mcp`** — the MCP tool surface that agents call directly. Provides tools for checkpointing sessions, listing sessions, restoring sessions, previewing handoff briefs, and searching session messages.
 - **`/ingest`** — an HTTP endpoint for pushing session data into Handshake programmatically. Used by the OpenCode JavaScript plugin to push session updates automatically.
+- **`/sync`** — pulls sessions from agents' native storage on demand; `POST` an optional `{"agent": "..."}` body to scope the pull to one agent.
+- **`/generate-brief`** — regenerates and caches the handoff brief for a session; called by agent plugins when a session goes idle or compacts.
 - **`/health`** — a simple liveness probe used by setup to confirm the daemon started correctly.
 
 Because the daemon binds only to `localhost`, it is not reachable from the network. All traffic stays on your machine.
 
 ## How sync works
 
-Each agent integrates with Handshake through the MCP protocol. When you ask an agent to `checkpoint this session`, it calls the `checkpoint_session` MCP tool with its native session ID and agent type. Handshake then:
+Sessions reach the Handshake database along two complementary paths — agents push, and Handshake pulls.
+
+**Push — checkpoints and hooks.** Each agent integrates through the MCP protocol. When you ask an agent to `checkpoint this session` (or its event hooks fire automatically at the end of a turn), it calls the `checkpoint_session` MCP tool with its native session ID and agent type. Handshake then:
 
 1. **Reads the native session** — locates and parses the agent's own session storage (JSONL files, SQLite database, or session index) to extract the full message history.
-2. **Captures git state** — if the session has a working directory and that directory contains a git repository, Handshake records the current branch, staged files, and unstaged files.
+2. **Captures git state** — if the session has a working directory and that directory contains a git repository, Handshake records the current branch, working tree status, the remote URL, and the commits made during the session.
 3. **Stores the session** — writes all messages and metadata into `~/.handshake/sessions.db`, a local SQLite database.
 
-Sync happens on demand when you checkpoint. Handshake does not poll or watch agent storage in the background — the checkpoint is an explicit action that gives you full control over when a snapshot is taken.
+**Pull — reading agent storage directly.** Handshake can also sweep sessions in the other direction, straight from each agent's native storage — including sessions that were never checkpointed. A pull is incremental (sessions already stored are skipped unless the native copy is newer) and never overwrites summaries or decisions recorded at checkpoint time. Pulls run in three places:
+
+- automatically, as a catch-up sweep every time the daemon starts — so sessions that ended while the daemon was down are recovered;
+- on demand from the CLI with [`handshake pull`](/reference/cli#handshake-pull) or the `/sync` endpoint;
+- from the TUI, with the `s` key or the `/pull` command.
+
+Between the two paths, your sessions are captured without you having to think about it — push keeps live sessions fresh turn by turn, and pull backfills anything the hooks missed.
 
 ## The handoff brief
 
@@ -39,7 +49,9 @@ The brief ends with explicit instructions for the receiving agent: read the goal
 
 ## Git state
 
-At checkpoint time, Handshake captures the current state of the git repository in the session's working directory. This snapshot includes the current branch name, staged files, and unstaged files. Codex's own git capture (recorded in the session transcript) is also used when available.
+At checkpoint time, Handshake captures the current state of the git repository in the session's working directory. This snapshot includes the current branch name, staged files, unstaged files, the repository's `remote.origin.url`, and the full record of commits made during the session — hash, author, date, subject, and message body. Because the commit record is stored with the session rather than queried later, it survives rebases, deleted repositories, and browsing from another machine. Codex's own git capture (recorded in the session transcript) is also used when available.
+
+The TUI renders this record as the **session commits** rail on every session's detail — stored commits for sessions checkpointed live, a rail reconstructed from the repository's history for sessions imported by pull.
 
 On restore, Handshake shows you a **restore packet** before injecting the handoff brief. The restore packet compares the saved git state against the current state of the working directory and reports any drift — files that were added, modified, or deleted since the checkpoint was made. This lets you understand what has changed before you start working and decide whether to stash, reset, or continue from the current state.
 

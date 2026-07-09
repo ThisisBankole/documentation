@@ -25,6 +25,7 @@
             "group": "Using Handshake",
             "pages": [
               "guides/checkpointing",
+              "guides/using-the-tui",
               "guides/switching-agents",
               "guides/searching-sessions",
               "guides/handoff-brief"

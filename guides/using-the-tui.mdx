@@ -1,0 +1,106 @@
+---
+title: "Using the TUI"
+sidebarTitle: "Using the TUI"
+description: "Browse, search, pull, and restore sessions from Handshake's terminal UI — session cards, a slash-command box, and a navigable session detail."
+---
+
+The TUI is Handshake's interactive surface. It shows every checkpointed session as a card, lets you search across all of them, pull sessions straight from your agents' native storage, and restore a session without leaving your terminal. Launch it with:
+
+```bash
+handshake browse
+```
+
+`b`, `-b`, `--b`, and `ui` all work as aliases, and `handshake list` opens the TUI too when run on a terminal.
+
+## The session cards
+
+Sessions render as a single column of cards, newest first. Each card shows:
+
+- **Title** — the session's checkpoint title, wrapped in bold
+- **Working directory** — where the session ran
+- **Git line** — branch `@` commit and subject, plus `✓ clean` or `● N uncommitted change(s)` at checkpoint time
+- **Footer** — the agent as a colored pill (each agent has a stable identity color: claude-code mauve, codex teal, opencode green, hermes yellow), the model, and a relative age
+
+Move the selection bar with `↑` `↓` (or `j` `k`), jump pages with `PgUp` `PgDn`, and hit the ends with `Home` and `End`. Press `a` to cycle the agent filter — the session count and active filter always show in the top-right status area.
+
+## The command box
+
+The box under the header is always visible and does two jobs, as its placeholder says: **type `/` for commands · anything else searches every session**. Press `/` (or click) to focus it.
+
+Typing `/` drops down the command list, filtered as you type. Commands without an argument run as soon as you pick them; commands that take one wait in the box for it.
+
+| Command | What it does |
+| --- | --- |
+| `/open` | Open the selected session's detail |
+| `/brief` | Handoff brief for the selected session |
+| `/timeline` | Full-screen timeline for the selected session |
+| `/search <query>` | Full-text search across all sessions |
+| `/pull <agent>` | Pull sessions from agent storage (no agent pulls all) |
+| `/agent <name>` | Filter by agent — no name cycles the filter |
+| `/help` | Every command and key, in one overlay |
+| `/quit` | Leave the TUI |
+
+Anything that doesn't start with `/` runs as a full-text search. Results appear as compact cards — Enter opens the matched message full-screen, Esc returns to your sessions.
+
+<Tip>
+  Press `h` or `?` anywhere for the help overlay — it lists every key and command, so you never need to memorise this page.
+</Tip>
+
+## The session detail
+
+Press Enter on a card to open the session detail: one navigable view you walk through row by row with the arrow keys, top to bottom.
+
+<Steps>
+  <Step title="Metadata">
+    Agent, model, working directory, last update, and the repository's `remote.origin.url` when one was captured.
+  </Step>
+  <Step title="Session commits">
+    A vertical rail of the commits made during this session — full hash, author, date, subject, and message body, newest first under the branch head. Sessions checkpointed live store this record durably, so it survives rebases, deleted repositories, and browsing from another machine. Sessions imported with `pull` reconstruct the rail from the repository's history when it still exists; if there is no git activity to show, the section says so.
+  </Step>
+  <Step title="Timeline">
+    The session's activity, chapter by chapter — each of your prompts opens a chapter containing the agent's replies, collapsed tool runs with call counts, and any commits that landed in that window. Enter on a chapter folds or unfolds it; Enter on an event opens its full text.
+  </Step>
+  <Step title="Decisions">
+    The settled decisions recorded at checkpoint time, if any.
+  </Step>
+  <Step title="The brief button">
+    At the very end sits `▶ view brief`. Arrow down to it — or press `End` to jump straight there — and press Enter to open the session's handoff brief.
+  </Step>
+</Steps>
+
+<Note>
+  The summary you record at checkpoint time is not repeated on the detail — it is the heart of the handoff brief, behind the `▶ view brief` button.
+</Note>
+
+## Pulling sessions
+
+Press `s` (or use `/pull`, optionally with an agent name) to import sessions directly from your agents' native storage — including sessions that were never explicitly checkpointed. The pull is incremental: sessions already in the database are skipped unless the native copy is newer, and summaries or decisions recorded at checkpoint time are never overwritten. The status bar reports the outcome — for example `pull: 4 new · 2 updated`.
+
+The same import runs from the command line as [`handshake pull`](/reference/cli#handshake-pull), and the daemon performs a catch-up pull automatically every time it starts.
+
+## Restoring a session
+
+From a session's detail (or the timeline), press `y`. The TUI shows the restore packet — the saved git state compared against your working directory now, so you can see any drift before committing to the restore. Press `y` again to confirm: the TUI exits and prints the handoff brief into your terminal, ready to paste or pipe into your next agent. Esc cancels.
+
+## Keyboard reference
+
+The same reference is available inside the TUI under `h`.
+
+| Context | Key | Action |
+| --- | --- | --- |
+| Browser | `enter` | Open the selected session |
+| Browser | `t` | Full-screen timeline |
+| Browser | `/` | Focus the command box |
+| Browser | `a` | Cycle the agent filter |
+| Browser | `s` | Pull sessions from agent storage |
+| Browser | `h` `?` | Help overlay |
+| Browser | `esc` | Leave search results |
+| Browser | `q` | Quit |
+| Detail | `↑` `↓` | Move through the rows |
+| Detail | `enter` | Fold a chapter · open an event · press the brief button |
+| Detail | `end` | Jump to `▶ view brief` |
+| Detail | `d` / `t` | Session detail / full-screen timeline |
+| Detail | `y` | Restore (asks to confirm) |
+| Detail | `esc` | Back one layer |
+| Restore confirm | `y` / `enter` | Restore and print the brief |
+| Restore confirm | `n` / `esc` | Cancel |

@@ -14,9 +14,13 @@ This means:
 
 - You can restore any session in another agent at any time, even if you never ran a manual checkpoint.
 - If your terminal crashes or you close the agent, the session is still saved up to the last response.
-- You can browse recent sessions with `handshake list` and pick one up later.
+- You can browse your sessions in the [TUI](/guides/using-the-tui) with `handshake browse` and pick one up later.
 
 Automatic sync is the recommended way to use Handshake. For most workflows, you never need to think about checkpointing at all.
+
+<Note>
+  Sessions that predate Handshake — or that ended while the daemon was down — aren't lost either: `handshake pull` imports them straight from each agent's native storage, and the daemon runs the same sweep automatically on startup. See [`handshake pull`](/reference/cli#handshake-pull).
+</Note>
 
 ## Manual checkpoints
 

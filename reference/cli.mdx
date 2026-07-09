@@ -1,7 +1,7 @@
 ---
 title: "CLI"
 sidebarTitle: "CLI"
-description: "Complete reference for all handshake CLI commands, including setup, list, restore, serve, install-service, uninstall, and version."
+description: "Complete reference for all handshake CLI commands, including setup, browse, pull, list, restore, timeline, serve, install-service, uninstall, and version."
 ---
 
 The `handshake` CLI is the primary way to install, manage, and interact with the Handshake daemon from your terminal. Every workflow — from first-time setup to switching agents mid-session — runs through these commands. If you have just installed Handshake, start with `handshake setup`.
@@ -40,7 +40,7 @@ handshake serve
 
 ### `handshake serve`
 
-Start the Handshake daemon manually. The daemon listens on `localhost:8765` by default and exposes two endpoints: an MCP endpoint at `/mcp` for your agents, and an ingest endpoint at `/ingest` for session syncing. This command blocks — run it in a terminal session or let `install-service` manage it in the background.
+Start the Handshake daemon manually. The daemon listens on `localhost:8765` by default and exposes an MCP endpoint at `/mcp` for your agents, an ingest endpoint at `/ingest` for session syncing, and a `/sync` endpoint for on-demand pulls. On startup it also runs a catch-up pull in the background, sweeping in any sessions that ended while the daemon was down. This command blocks — run it in a terminal session or let `install-service` manage it in the background.
 
 ```bash
 handshake serve
@@ -58,9 +58,47 @@ HANDSHAKE_ADDR=localhost:8766 handshake serve
 
 ---
 
+### `handshake browse`
+
+Open the TUI — Handshake's interactive terminal UI. Sessions render as cards you move through with the arrow keys; a command box at the top takes `/` commands (`/search`, `/pull`, `/brief`, …) or free-text search; Enter opens a session's detail with its commits, timeline, and handoff brief. See the [Using the TUI guide](/guides/using-the-tui) for the full tour.
+
+```bash
+handshake browse
+```
+
+Also accepts `b`, `-b`, `--b`, and `ui`:
+
+```bash
+handshake b
+```
+
+---
+
+### `handshake pull`
+
+Import sessions directly from your agents' native storage into the Handshake database — including sessions that were never explicitly checkpointed. Without an argument, every pullable agent is swept; pass an agent name to scope the pull.
+
+```bash
+handshake pull
+handshake pull claude-code
+```
+
+Valid agents are `claude-code`, `codex`, `opencode`, and `hermes`. The pull is incremental and safe to re-run: sessions already in the database are skipped unless the native copy is newer, and summaries or decisions recorded at checkpoint time are never overwritten. Each agent reports a result line:
+
+```text
+✓ claude-code  30 scanned · 1 new · 29 unchanged
+✓ opencode     51 scanned · 40 new · 11 unchanged
+```
+
+<Note>
+  The daemon runs this same catch-up pull automatically on startup, and the TUI triggers it with the `s` key or `/pull`. The CLI command is useful for scripting or a one-off backfill.
+</Note>
+
+---
+
 ### `handshake list`
 
-List all checkpointed sessions stored in your local database. Codex sessions are auto-synced from disk before the list is shown, so you always see the latest state.
+List all checkpointed sessions stored in your local database. On a terminal this opens the TUI (same as `handshake browse`); when piped, it prints plain text so scripts and agents can parse it. Codex sessions are auto-synced from disk before the list is shown, so you always see the latest state.
 
 ```bash
 handshake list
@@ -91,6 +129,18 @@ Inject this context? [Y/n]
 ```
 
 Answer `n` to cancel without restoring.
+
+---
+
+### `handshake timeline`
+
+Print a session's activity timeline — your prompts as chapters, with the agent's replies, collapsed tool runs, and any commits that landed during the session interleaved chronologically. The title is fuzzy matched the same way as `restore`.
+
+```bash
+handshake timeline <title>
+```
+
+The same timeline is available interactively inside the TUI, both inline on a session's detail and full-screen with the `t` key.
 
 ---
 

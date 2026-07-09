@@ -10,7 +10,7 @@ Handshake integrates with Claude Code via the MCP protocol and event hooks. Once
 
 Claude Code stores sessions as JSONL transcript files at `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`. When you checkpoint a session, Handshake reads these files and stores a portable session snapshot in its local database at `~/.handshake/sessions.db`.
 
-Handshake installs three event hooks into Claude Code's `~/.claude/hooks.json`:
+Handshake registers three event hooks in Claude Code's `~/.claude/settings.json` — the file Claude Code actually reads hook configuration from:
 
 | Hook | What it does |
 | --- | --- |
@@ -28,7 +28,11 @@ Run the setup wizard once:
 handshake setup
 ```
 
-The wizard registers Handshake as an MCP server in Claude Code's user config using `claude mcp add`, and installs the three event hook scripts into `~/.claude/hooks/`. Both steps are automatic — you don't need to touch any config files manually.
+The wizard registers Handshake as an MCP server in Claude Code's user config using `claude mcp add`, installs the three event hook scripts into `~/.claude/hooks/`, and registers them in `~/.claude/settings.json` (your existing settings are preserved and backed up first). Both steps are automatic — you don't need to touch any config files manually.
+
+<Warning>
+  Versions before 0.15.0 wrote the hook registration to `~/.claude/hooks.json`, which Claude Code never reads — so sessions were not synced automatically. Upgrade and re-run `handshake setup` (or `handshake init`) to move the hooks to `settings.json`; stale `hooks.json` entries are cleaned up for you. Sessions missed in the meantime can be imported with `handshake pull claude-code`.
+</Warning>
 
 <Note>
   Setup requires the `claude` CLI to be on your PATH for automatic MCP registration. If it isn't found, the wizard prints the manual command to add:
