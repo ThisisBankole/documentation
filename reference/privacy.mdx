@@ -1,0 +1,80 @@
+---
+title: "Privacy"
+sidebarTitle: "Privacy"
+description: "Handshake stores all session data locally on your machine in a SQLite database. No telemetry, no cloud sync, and no accounts of any kind."
+---
+
+Handshake is designed from the ground up to keep your session data on your machine. There are no accounts, no cloud sync, and no telemetry of any kind. The daemon binds to localhost only and never makes outbound connections. Your conversations stay on your hardware.
+
+<Note>
+  No cloud. No accounts. No data leaving your machine.
+</Note>
+
+---
+
+## What Is Stored
+
+Handshake writes two types of data to your machine:
+
+**Session database** — stored at `~/.handshake/sessions.db` (SQLite). Each checkpointed session contains:
+
+- Session title, agent name, and working directory
+- The full message history (user and assistant turns)
+- Model name and timestamps
+- An optional handoff summary and decisions written by the checkpointing agent
+- A git state snapshot (branch, commit hash, dirty files) captured at checkpoint time
+
+**Agent registration files** — Handshake adds itself as an MCP server to each agent's config file during setup. The exact file location varies by agent. These entries point to `http://localhost:8765/mcp` (or whichever port you configured).
+
+Handshake **does not** store API keys, credentials, or auth tokens of any kind.
+
+---
+
+## Network Access
+
+The Handshake daemon binds exclusively to `localhost:8765`. It is not accessible from the network — only processes on your own machine can connect to it.
+
+Handshake makes **no outbound connections**. It never contacts external servers, sends usage data, or checks for updates over the network. Once installed, it operates entirely offline.
+
+---
+
+## Data Location
+
+All session data is stored in a single SQLite file:
+
+```text
+~/.handshake/sessions.db
+```
+
+This is a standard SQLite database. You can back up or migrate it with any SQLite-compatible tool:
+
+```bash
+# Copy to a backup
+cp ~/.handshake/sessions.db ~/Documents/handshake-backup.db
+```
+
+---
+
+## Deleting Your Data
+
+To remove all session data, run the uninstall command and choose to delete the database when prompted:
+
+```bash
+handshake uninstall
+```
+
+Handshake will ask:
+
+```text
+Delete session database? Your session history will be lost. [y/N]
+```
+
+Answer `y` to delete `~/.handshake/` and everything in it.
+
+Alternatively, delete the directory manually at any time — Handshake does not re-create it until the next `handshake init` or `handshake setup` run:
+
+```bash
+rm -rf ~/.handshake
+```
+
+For more details on the full uninstall process, see the [Uninstall guide](/reference/uninstall).

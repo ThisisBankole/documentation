@@ -1,0 +1,67 @@
+---
+title: "Claude Code"
+sidebarTitle: "Claude Code"
+description: "Set up Handshake with Claude Code to checkpoint sessions automatically, switch agents mid-task, and restore exactly where you left off."
+---
+
+Handshake integrates with Claude Code via the MCP protocol and event hooks. Once set up, your Claude Code sessions are checkpointed automatically — you can switch to any other supported agent and pick up exactly where you left off.
+
+## How it works
+
+Claude Code stores sessions as JSONL transcript files at `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`. When you checkpoint a session, Handshake reads these files and stores a portable session snapshot in its local database at `~/.handshake/sessions.db`.
+
+Handshake installs three event hooks into Claude Code's `~/.claude/hooks.json`:
+
+| Hook | What it does |
+| --- | --- |
+| `PreCompact` | Checkpoints the session before Claude Code compacts the transcript |
+| `PostCompact` | Captures the compaction summary after the transcript is condensed |
+| `Stop` | Syncs the session whenever a conversation turn ends |
+
+These hooks run as Python scripts in `~/.claude/hooks/` and keep your session record up to date in the background automatically.
+
+## Setup
+
+Run the setup wizard once:
+
+```bash
+handshake setup
+```
+
+The wizard registers Handshake as an MCP server in Claude Code's user config using `claude mcp add`, and installs the three event hook scripts into `~/.claude/hooks/`. Both steps are automatic — you don't need to touch any config files manually.
+
+<Note>
+  Setup requires the `claude` CLI to be on your PATH for automatic MCP registration. If it isn't found, the wizard prints the manual command to add:
+
+  ```bash
+  claude mcp add -s user --transport http handshake http://localhost:8765/mcp
+  ```
+
+  The hook scripts require Python 3. If Python 3 isn't on your PATH, the hooks are skipped and you can still checkpoint manually by asking Claude Code.
+</Note>
+
+## Checkpointing
+
+Once set up, you can checkpoint from inside Claude Code using natural language:
+
+<CodeGroup>
+
+```text Save the current session
+checkpoint this session
+```
+
+```text List saved sessions
+list my sessions
+```
+
+```text Restore a session in another agent
+restore my auth refactor session
+```
+
+</CodeGroup>
+
+The `Stop` hook also syncs your session automatically at the end of every conversation turn, so you rarely need to checkpoint manually.
+
+## Session titles
+
+Claude Code sessions are titled from the `summary` record in the JSONL transcript file. This summary is written by Claude Code when it compacts the transcript. If no summary record exists yet (for example, early in a new session), Handshake derives the title from the text of your first message instead.

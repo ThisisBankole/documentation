@@ -1,0 +1,51 @@
+---
+title: "Hermes"
+sidebarTitle: "Hermes"
+description: "Set up Handshake with Hermes to checkpoint sessions automatically via a plugin hook, use natural language commands, and restore across agents."
+---
+
+Handshake integrates with Hermes via the MCP protocol and reads Hermes' SQLite session database directly. Setup is handled automatically by the wizard — you run one command and Handshake is registered and ready.
+
+## How it works
+
+Hermes stores its sessions in a SQLite database at `~/.hermes/state.db`. When you checkpoint a session, Handshake reads this database safely without blocking Hermes from writing.
+
+Handshake also installs a plugin into `~/.hermes/hooks/handshake/` — a directory Hermes auto-discovers at startup. The plugin keeps your session record up to date after each conversation turn.
+
+`handshake setup` registers Handshake as an MCP server in Hermes' config at `~/.hermes/config.yaml` under the `mcp_servers` key:
+
+```yaml
+mcp_servers:
+  handshake:
+    url: http://localhost:8765/mcp
+```
+
+## Setup
+
+Run the setup wizard once:
+
+```bash
+handshake setup
+```
+
+The wizard adds the MCP server entry to `~/.hermes/config.yaml` (backing up the original first) and installs the hook plugin. If Hermes hasn't been configured yet and no config file exists, the wizard prints the snippet to add manually.
+
+## Checkpointing
+
+Once set up, you can checkpoint and restore sessions from inside Hermes using natural language:
+
+<CodeGroup>
+
+```text Save the current session
+checkpoint this session
+```
+
+```text List saved sessions
+list my sessions
+```
+
+```text Restore a session
+restore my database migration session
+```
+
+</CodeGroup>

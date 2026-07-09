@@ -1,0 +1,174 @@
+---
+title: "CLI"
+sidebarTitle: "CLI"
+description: "Complete reference for all handshake CLI commands, including setup, list, restore, serve, install-service, uninstall, and version."
+---
+
+The `handshake` CLI is the primary way to install, manage, and interact with the Handshake daemon from your terminal. Every workflow — from first-time setup to switching agents mid-session — runs through these commands. If you have just installed Handshake, start with `handshake setup`.
+
+## Commands
+
+### `handshake setup`
+
+Run the guided onboarding wizard. This is the recommended first step after installing Handshake. The wizard walks you through three steps: creating the session database and registering with your agents, installing Handshake as a login service, and starting the daemon. It also detects port conflicts automatically and picks the next free port if `localhost:8765` is already in use.
+
+```bash
+handshake setup
+```
+
+<Note>
+  `handshake setup` is also triggered automatically by the Homebrew post-install hook. If you installed via Homebrew, you may already be in the wizard.
+</Note>
+
+---
+
+### `handshake init`
+
+Non-interactive setup. Creates the session database, installs the OpenCode plugin, and registers Handshake as an MCP server with all supported agents — without any prompts. Used internally by the install script and useful in automated environments.
+
+```bash
+handshake init
+```
+
+After running `init`, start the daemon manually:
+
+```bash
+handshake serve
+```
+
+---
+
+### `handshake serve`
+
+Start the Handshake daemon manually. The daemon listens on `localhost:8765` by default and exposes two endpoints: an MCP endpoint at `/mcp` for your agents, and an ingest endpoint at `/ingest` for session syncing. This command blocks — run it in a terminal session or let `install-service` manage it in the background.
+
+```bash
+handshake serve
+```
+
+To change the listening address, set the `HANDSHAKE_ADDR` environment variable before running:
+
+```bash
+HANDSHAKE_ADDR=localhost:8766 handshake serve
+```
+
+<Tip>
+  If you see a "port already in use" error, run `handshake setup` again — it detects conflicts and re-registers all agents with the new address automatically.
+</Tip>
+
+---
+
+### `handshake list`
+
+List all checkpointed sessions stored in your local database. Codex sessions are auto-synced from disk before the list is shown, so you always see the latest state.
+
+```bash
+handshake list
+```
+
+Each entry shows the session title and the agent that created it.
+
+---
+
+### `handshake restore`
+
+Restore a session by title. The title is fuzzy matched — exact matches win, then substring matches. If multiple sessions match, the most recently updated one is used.
+
+```bash
+handshake restore <title>
+```
+
+**Example:**
+
+```bash
+handshake restore "auth refactor"
+```
+
+If the session has stored git state, `restore` first shows a git drift packet — a summary of what has changed in the working directory since the checkpoint. You are then prompted to confirm before the handoff brief is injected into your terminal.
+
+```text
+Inject this context? [Y/n]
+```
+
+Answer `n` to cancel without restoring.
+
+---
+
+### `handshake install-service`
+
+Install Handshake as a login service so the daemon starts automatically whenever you log in. Uses **launchd** on macOS and **systemd** on Linux.
+
+```bash
+handshake install-service
+```
+
+After running this command, you do not need to run `handshake serve` manually — the service manager keeps the daemon running.
+
+---
+
+### `handshake uninstall-service`
+
+Remove the login service installed by `install-service`. The daemon stops and will not restart on login. Your session database and agent registrations are left untouched.
+
+```bash
+handshake uninstall-service
+```
+
+<Tip>
+  Use this command if you want to temporarily stop Handshake without fully uninstalling it.
+</Tip>
+
+---
+
+### `handshake uninstall`
+
+Remove Handshake from your machine. This command stops the daemon, removes the login service, deregisters Handshake from all agent configs (Claude Code, OpenCode, Hermes, and Codex), and then prompts you to optionally delete the session database and the binary.
+
+```bash
+handshake uninstall
+```
+
+See the [Uninstall guide](/reference/uninstall) for a full walkthrough of what is removed.
+
+---
+
+### `handshake version`
+
+Print the installed version of Handshake.
+
+```bash
+handshake version
+```
+
+Also accepts `--version` and `-v`.
+
+---
+
+### `handshake help`
+
+Print the full usage message, including all commands and environment variables.
+
+```bash
+handshake help
+```
+
+Also accepts `--help` and `-h`. Running `handshake` with no arguments is equivalent to running `handshake setup`.
+
+---
+
+## Environment Variables
+
+Two environment variables let you override the default address Handshake uses. Set both when another tool already occupies port `8765`.
+
+| Variable | Description |
+| --- | --- |
+| `HANDSHAKE_ADDR` | Address the daemon binds to — e.g. `localhost:8766` |
+| `HANDSHAKE_URL` | MCP endpoint URL registered with your agents — e.g. `http://localhost:8766/mcp` |
+
+```bash
+export HANDSHAKE_ADDR=localhost:8766
+export HANDSHAKE_URL=http://localhost:8766/mcp
+handshake setup
+```
+
+For more details on configuration, see the [Environment Variables](/configuration/environment-variables) reference.

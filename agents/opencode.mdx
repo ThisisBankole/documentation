@@ -1,0 +1,54 @@
+---
+title: "OpenCode"
+sidebarTitle: "OpenCode"
+description: "Set up Handshake with OpenCode to auto-sync sessions via a JavaScript plugin, checkpoint with natural language, and restore across agents."
+---
+
+Handshake integrates with OpenCode via a JavaScript plugin that automatically syncs sessions after each response, and via the MCP protocol for checkpointing and restore commands. Once installed, your OpenCode sessions are always current in Handshake — no manual action required.
+
+## How it works
+
+`handshake setup` installs two things into OpenCode:
+
+1. **A JavaScript plugin** at `~/.config/opencode/plugins/handshake.js` — registered in OpenCode's config under the `plugin` array. After every response, this plugin keeps your session record up to date continuously.
+2. **An MCP server entry** in `~/.config/opencode/opencode.json` under the `mcp` key — this is how OpenCode routes `checkpoint`, `list`, and `restore` commands to the Handshake daemon.
+
+OpenCode stores its sessions in a SQLite database at `~/.local/share/opencode/opencode.db`. Handshake reads this database safely in the background when generating a restore brief.
+
+## Setup
+
+Run the setup wizard once:
+
+```bash
+handshake setup
+```
+
+The plugin is written to disk and the MCP server entry is added to `~/.config/opencode/opencode.json` in a single step. If an OpenCode config already exists, the wizard backs it up before modifying it.
+
+<Note>
+  If OpenCode hasn't been run yet and no config file exists at `~/.config/opencode/opencode.json`, the wizard creates a fresh config with the Handshake MCP entry and plugin reference included.
+</Note>
+
+## Checkpointing
+
+You can checkpoint and restore sessions from inside OpenCode using natural language:
+
+<CodeGroup>
+
+```text Save the current session
+checkpoint this session
+```
+
+```text List saved sessions
+list my sessions
+```
+
+```text Restore a session
+restore my api redesign session
+```
+
+</CodeGroup>
+
+## Auto-sync
+
+The OpenCode plugin sends session data to Handshake after every response automatically. You don't need to manually checkpoint to keep your sessions current — the plugin handles that in the background. Explicitly saying `checkpoint this session` is useful when you want to add a summary and record key decisions to the session, which enriches the restore brief.

@@ -1,0 +1,46 @@
+---
+title: "Handshake"
+sidebarTitle: "Home"
+description: "Handshake keeps your sessions portable across coding agents — no cloud, no accounts, no lost context."
+---
+
+Welcome to Handshake — a local-first daemon that keeps your AI coding sessions synced so you can switch between agents without losing context. Hit a token limit in Claude Code, switch to Codex, and pick up exactly where you left off. Handshake runs silently in the background, capturing everything automatically.
+
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="book-open" href="/introduction">
+    Learn what Handshake is, how it works, and which agents it supports.
+  </Card>
+
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Install Handshake and make your first checkpoint in under a minute.
+  </Card>
+
+  <Card title="Checkpointing" icon="flag-checkered" href="/guides/checkpointing">
+    Save and restore sessions at exactly the right moment.
+  </Card>
+
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+    Every command and flag available in the Handshake CLI.
+  </Card>
+</CardGroup>
+
+## Get started in four steps
+
+<Steps>
+  <Step title="Install Handshake">
+    Install with a single curl command, via Homebrew, or build from source. The binary is a single self-contained executable with no runtime dependencies.
+  </Step>
+  <Step title="Run the setup wizard">
+    Run `handshake setup` to create the session database, register Handshake with your agents, and install it as a login service — all in about 30 seconds.
+  </Step>
+  <Step title="Checkpoint your session">
+    In any supported agent, say `checkpoint this session`. Handshake saves the full conversation, git state, and a handoff brief in one step.
+  </Step>
+  <Step title="Restore in another agent">
+    Open a different agent and say `restore my <session name> session`. The new agent receives a complete handoff brief and picks up right where the previous one left off.
+  </Step>
+</Steps>
+
+<Note>
+  Handshake runs entirely on your machine. No cloud sync, no accounts, no telemetry.
+</Note>

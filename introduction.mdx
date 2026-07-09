@@ -1,0 +1,58 @@
+---
+title: "Introduction"
+sidebarTitle: "Introduction"
+description: "Handshake is a local-first daemon that makes AI coding sessions portable across  coding agents with no cloud required."
+---
+
+Handshake is a local-first daemon that makes your AI coding sessions portable. When you hit a token limit, want to try a different model, or simply prefer a different agent for a particular task, you shouldn't have to start over. Handshake hooks into each agent's native event system, captures your session automatically, and generates a structured handoff brief so the next agent can pick up exactly where the last one stopped.
+
+## What Handshake does
+
+Handshake runs as a background daemon on `localhost:8765`. It registers itself with each supported agent using the MCP protocol, which means agents treat it as a tool they can call — no manual export, no copy-pasting. Every time you checkpoint a session, Handshake reads the conversation directly from the agent's native session storage, captures the current git state of your working directory, and stores everything locally in `~/.handshake/sessions.db`.
+
+When you restore a session in a new agent, Handshake generates a handoff brief — a structured summary that gives the receiving agent the full picture: your original goal, the current state, settled decisions, and a conversation excerpt. The new agent reads the brief and continues the work as if it had been there from the start.
+
+## Supported agents
+
+Handshake integrates natively with all four major AI coding agents:
+
+- **Claude Code** — reads JSONL transcript files from `~/.claude/projects/`
+- **OpenCode** — reads from OpenCode's SQLite database at `~/.local/share/opencode/opencode.db`
+- **Hermes** — reads from Hermes' SQLite state database at `~/.hermes/state.db`
+- **Codex** — reads from the Codex session index and transcript files at `~/.codex/`
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Automatic sync" icon="rotate">
+    The daemon hooks into each agent's native event system. Checkpoint by asking your agent or via the CLI — no manual export steps required.
+  </Card>
+
+  <Card title="Handoff briefs" icon="file-lines">
+    Every restore generates a structured document: original goal, current state and next steps (written by the source agent), settled decisions, and a conversation excerpt.
+  </Card>
+
+  <Card title="Git state capture" icon="code-branch">
+    At checkpoint, Handshake records your current branch and staged or unstaged files. On restore, it shows you exactly what has changed since the checkpoint was made.
+  </Card>
+
+  <Card title="Full-text search" icon="magnifying-glass">
+    Search across all session messages with `search_session` or `search_all_sessions` to find decisions, file names, error messages, or any topic discussed in a past session.
+  </Card>
+
+  <Card title="Local-first" icon="hard-drive">
+    Sessions are stored in a single SQLite file at `~/.handshake/sessions.db`. Nothing leaves your machine.
+  </Card>
+
+  <Card title="Runs as a login service" icon="gear">
+    Setup installs Handshake as a launchd agent (macOS) or systemd user service (Linux) so the daemon starts automatically on login.
+  </Card>
+</CardGroup>
+
+## Privacy
+
+Handshake is designed to stay on your machine. The daemon binds exclusively to `localhost:8765` and is not accessible from the network. There is no telemetry, no cloud sync, and no account required. Your sessions are stored entirely in `~/.handshake/sessions.db` — a plain SQLite file you can inspect, back up, or delete at any time. Running `handshake uninstall` removes all Handshake configuration from your agents and, optionally, deletes the database and binary.
+
+---
+
+Ready to get started? Head to the [Quickstart](/quickstart) to install Handshake and make your first checkpoint in under a minute.

@@ -1,0 +1,34 @@
+---
+title: "Overview"
+sidebarTitle: "Overview"
+description: "Learn what you can configure in Handshake — listen address, port, and MCP endpoint URL — and when you need to change them from their defaults."
+---
+
+Handshake works out of the box with no configuration required. Run `handshake setup` and the wizard handles everything — it checks port availability, registers with your agents, and installs itself as a login service. This section covers the options available if you need to customize the defaults.
+
+## Configurable settings
+
+| Setting | Default | How to set |
+| --- | --- | --- |
+| Daemon listen address | `localhost:8765` | `HANDSHAKE_ADDR` env var |
+| MCP endpoint URL | `http://localhost:8765/mcp` | `HANDSHAKE_URL` env var |
+
+## When do you need to configure anything?
+
+You only need to change these settings in two situations:
+
+**Port conflict** — another tool on your machine already uses port 8765. In most cases the setup wizard catches this automatically and moves Handshake to the next free port without any action from you. If you want to pin a specific port instead of letting the wizard choose, set `HANDSHAKE_ADDR` and `HANDSHAKE_URL` before running setup.
+
+**Fixed port across reinstalls** — if you work in environments where you need the daemon to always be reachable at a predictable address (for example, in scripts or shared team tooling), pin the port explicitly so it doesn't change between reinstalls.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Change the port" href="/configuration/port">
+    Move Handshake to a different port if 8765 is already taken, or pin a specific port for consistency.
+  </Card>
+
+  <Card title="Environment variables" href="/configuration/environment-variables">
+    Full reference for `HANDSHAKE_ADDR` and `HANDSHAKE_URL`.
+  </Card>
+</CardGroup>

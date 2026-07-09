@@ -1,0 +1,113 @@
+---
+title: "Searching Sessions"
+sidebarTitle: "Searching Sessions"
+description: "Use full-text search to find decisions, file names, and topics discussed across your checkpointed sessions."
+---
+
+A handoff brief surfaces the most important context from a session, but sometimes you need to dig deeper. Maybe you remember a decision was made about rate limiting two weeks ago but can't recall which project it was in. Or you want to find the exact error message that appeared during a debugging session. Handshake's full-text search lets you search through your entire session history — within a single session or across all of them.
+
+## Search within a session
+
+When you know which session contains the information you need, use `search_session` to find specific messages in it.
+
+**Parameters:**
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `title` | ✅ Yes | Title (or part of the title) of the session to search |
+| `query` | ✅ Yes | Words or phrases to search for |
+| `limit` | No | Maximum number of results to return (default 5) |
+
+Ask your agent in natural language:
+
+```text
+in my auth refactor session, search for "JWT"
+```
+
+Results show the message role and a content snippet for each match:
+
+```text
+Search: "JWT" in "auth refactor" — 3 result(s)
+
+[user]
+Should we use JWT or server-side sessions for the auth tokens?
+
+[assistant]
+Given the stateless API requirement, JWT is the better fit here. We'll sign
+tokens with RS256 and keep them short-lived (15 minutes) with a refresh token [...]
+
+[assistant]
+JWT middleware is now wired into all protected routes. The token is verified
+against the public key loaded at startup [...]
+```
+
+## Search across all sessions
+
+When you're not sure which session covered a topic, use `search_all_sessions` to search everywhere at once.
+
+**Parameters:**
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `query` | ✅ Yes | Words or phrases to search for |
+| `limit` | No | Maximum number of results to return (default 10) |
+| `agent` | No | Filter results to a specific agent: `claude-code`, `opencode`, `hermes`, or `codex` |
+
+Ask your agent:
+
+```text
+search all sessions for "rate limiting"
+```
+
+Results include the session title, agent, and message role alongside the content snippet:
+
+```text
+Search: "rate limiting" across all sessions — 4 result(s)
+
+[payment webhook integration / hermes / assistant]
+Added token-bucket rate limiting on the webhook endpoint — 100 requests per
+minute per source IP. Anything above that gets a 429 with a Retry-After header [...]
+
+[council budget spending tracker / opencode / user]
+We need rate limiting on the export endpoint before going live [...]
+```
+
+To narrow results to a specific agent:
+
+```text
+search all my claude-code sessions for "database migration"
+```
+
+## What you can search for
+
+Full-text search works across all message content in your sessions. Useful things to search for include:
+
+<CardGroup cols={2}>
+  <Card title="Error messages" icon="triangle-exclamation">
+    Paste an error you're seeing to find sessions where it came up and how it was resolved.
+  </Card>
+
+  <Card title="File names" icon="file-code">
+    Search for a specific file to find every session where that file was discussed or modified.
+  </Card>
+
+  <Card title="Decisions" icon="gavel">
+    Look up the reasoning behind a past decision — why JWT instead of sessions, why Postgres instead of SQLite.
+  </Card>
+
+  <Card title="Library and dependency names" icon="cube">
+    Find every session where a particular library was used, configured, or debugged.
+  </Card>
+
+  <Card title="Feature names" icon="star">
+    Search for a feature name to pull up all related context across projects.
+  </Card>
+
+  <Card title="Topics and concepts" icon="lightbulb">
+    Search for any technical topic that was discussed — "caching strategy", "auth flow", "background jobs".
+  </Card>
+</CardGroup>
+
+<Tip>
+  Use search when you know a topic was discussed but can't remember which session it was in. Start with `search_all_sessions` to find the right session, then use `search_session` to dig into the details once you've identified it.
+</Tip>

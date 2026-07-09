@@ -1,0 +1,93 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Handshake",
+  "projectDescription": "A local-first daemon that syncs AI coding agent sessions so you can switch between Claude Code, OpenCode, Hermes, and Codex without losing context.",
+  "theme": "luma",
+  "primaryColor": "#6366F1",
+  "lightColor": "#818CF8",
+  "darkColor": "#4F46E5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "how-it-works"
+            ]
+          },
+          {
+            "group": "Using Handshake",
+            "pages": [
+              "guides/checkpointing",
+              "guides/switching-agents",
+              "guides/searching-sessions",
+              "guides/handoff-brief"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/overview",
+              "configuration/port",
+              "configuration/environment-variables"
+            ]
+          },
+          {
+            "group": "Supported Agents",
+            "pages": [
+              "agents/claude-code",
+              "agents/opencode",
+              "agents/hermes",
+              "agents/codex"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/cli",
+              "reference/mcp-tools",
+              "reference/privacy",
+              "reference/uninstall"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Automatic session sync across Claude Code, OpenCode, Hermes, and Codex",
+    "Handoff briefs: original goal, decisions made, current state, and next steps",
+    "Git state capture at checkpoint — shows file drift when restoring",
+    "Full-text search across all session messages",
+    "Local-first: no cloud, no accounts, all data stored in ~/.handshake/sessions.db",
+    "Runs as a login service (launchd on macOS, systemd on Linux)",
+    "MCP protocol integration — agents call Handshake as a native tool",
+    "Fuzzy session title matching for fast lookup"
+  ],
+  "publicApiSurface": [
+    "handshake setup",
+    "handshake init",
+    "handshake serve",
+    "handshake list",
+    "handshake restore <title>",
+    "handshake install-service",
+    "handshake uninstall-service",
+    "handshake uninstall",
+    "handshake version",
+    "MCP tool: checkpoint_session",
+    "MCP tool: list_sessions",
+    "MCP tool: restore_session",
+    "MCP tool: generate_brief",
+    "MCP tool: search_session",
+    "MCP tool: search_all_sessions",
+    "HTTP GET /health",
+    "HTTP POST /ingest",
+    "HTTP POST /generate-brief",
+    "ENV: HANDSHAKE_ADDR",
+    "ENV: HANDSHAKE_URL"
+  ]
+}

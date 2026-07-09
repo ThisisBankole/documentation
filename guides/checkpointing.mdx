@@ -1,0 +1,118 @@
+---
+title: "Checkpointing"
+sidebarTitle: "Checkpointing"
+description: "Save a snapshot of your current session — full conversation, git state, decisions, and next steps — so you can restore or hand it off later."
+---
+
+A checkpoint is a snapshot of your current session — the full conversation, decisions made, current state, next steps, and the git state of your working directory at that moment. Checkpoints are what make it possible to restore your work in a different agent, or to return to a known-good moment later. Handshake syncs your sessions automatically in the background, so most of the time you don't have to do anything — but you can also create a manual checkpoint whenever you want to save a specific moment before switching.
+
+## Automatic sync
+
+By default, Handshake keeps every session checkpointed for you. The daemon hooks into each agent's native event system and syncs the session automatically every time the agent produces a response — no commands, no export steps, no extra clicks. Your work is always backed up in `~/.handshake/sessions.db` without any effort on your part.
+
+This means:
+
+- You can restore any session in another agent at any time, even if you never ran a manual checkpoint.
+- If your terminal crashes or you close the agent, the session is still saved up to the last response.
+- You can browse recent sessions with `handshake list` and pick one up later.
+
+Automatic sync is the recommended way to use Handshake. For most workflows, you never need to think about checkpointing at all.
+
+## Manual checkpoints
+
+Create a manual checkpoint when you want to attach a title, summary, or explicit decisions to a specific moment — usually right before handing off to a different agent or marking a milestone. Manual checkpoints are most useful when you want to:
+
+- Record a summary and decisions before handing off to a different agent
+- Save a named snapshot of a particular milestone
+- Ensure the receiving agent has a specific, well-described state to start from
+
+### From inside your agent
+
+The easiest way to create a manual checkpoint is to ask your agent directly — in natural language, from inside Claude Code, OpenCode, or Hermes.
+
+<Steps>
+  <Step title="Create a basic checkpoint">
+    Just tell your agent to save the session:
+
+    ```text
+    checkpoint this session
+    ```
+
+    Handshake saves the full conversation, your working directory, the current git branch, and any staged or unstaged file changes.
+  </Step>
+  <Step title="Add a summary (recommended)">
+    Include a brief description of where things stand. This becomes the "Current State & Next Steps" section of your handoff brief:
+
+    ```text
+    checkpoint this session. Current state: finished auth routes, next: write tests
+    ```
+  </Step>
+  <Step title="Record key decisions">
+    Include decisions you don't want the next agent to second-guess:
+
+    ```text
+    checkpoint this session. Decisions: use JWT, not sessions
+    ```
+
+    These appear in a dedicated "Settled Decisions" section in the handoff brief so the receiving agent knows not to relitigate them.
+  </Step>
+  <Step title="Give the checkpoint a title">
+    Use a descriptive title so you can find the session by name later:
+
+    ```text
+    checkpoint this session as "auth refactor"
+    ```
+  </Step>
+</Steps>
+
+### Via the MCP tool
+
+When you want more control, call the `checkpoint_session` MCP tool directly. Your agent can invoke this on your behalf, or you can configure tooling to call it programmatically.
+
+<Accordion title="checkpoint_session parameters">
+  | Parameter | Required | Description |
+  | --- | --- | --- |
+  | `session_id` | ✅ Yes | The agent's native session ID |
+  | `agent` | ✅ Yes | One of `claude-code`, `opencode`, `hermes`, `codex` |
+  | `title` | No | Human-readable title for the session |
+  | `summary` | Strongly recommended | Current state and next steps, written by the agent. Becomes the core of the handoff brief. |
+  | `decisions` | No | Key decisions made during the session, one per line — e.g. `Use JWT over sessions\nPostgres not SQLite`. Rendered as a dedicated Settled Decisions section. |
+</Accordion>
+
+A checkpoint call with all fields populated might look like this:
+
+```json
+{
+  "session_id": "01HXYZ...",
+  "agent": "claude-code",
+  "title": "auth refactor",
+  "summary": "Finished implementing JWT auth middleware. Routes are protected. Next: write integration tests for token refresh.",
+  "decisions": "Use JWT over sessions\nPostgres not SQLite\nNo refresh token rotation for v1"
+}
+```
+
+## What gets saved
+
+Every checkpoint captures the following:
+
+<CardGroup cols={2}>
+  <Card title="Conversation" icon="messages">
+    The full message history for the session, including all user and assistant turns. Tool output is stored but stripped from the handoff brief to reduce noise.
+  </Card>
+
+  <Card title="Session metadata" icon="tag">
+    Session title, working directory, model, source agent, and timestamps for when the session started and was last updated.
+  </Card>
+
+  <Card title="Git state" icon="code-branch">
+    The current branch name, any staged changes, and any unstaged file modifications at the time of the checkpoint.
+  </Card>
+
+  <Card title="Summary & decisions" icon="list-check">
+    The optional summary (current state and next steps) and decisions you provided, stored separately so they can be surfaced prominently in the handoff brief.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Ask your agent to include a summary and decisions in the checkpoint for the best handoff briefs. A summary like "finished auth routes, next: write tests" and a decisions block like "Use JWT over sessions" give the receiving agent immediate clarity — no digging through the conversation required.
+</Tip>

@@ -1,0 +1,59 @@
+---
+title: "How It Works"
+sidebarTitle: "How It Works"
+description: "Learn how Handshake's background daemon reads native agent storage, captures git state, and generates structured handoff briefs to keep sessions portable."
+---
+
+Handshake is built around a single idea: when you switch agents, you should not have to re-explain your context. To make that happen, Handshake runs a background daemon that reads each agent's native session storage, captures the state of your git repository, and generates a structured handoff brief that any supported agent can understand. This page explains each piece of that system in detail.
+
+## The daemon
+
+Handshake runs as a persistent background process, installed as a launchd login agent on macOS or a systemd user service on Linux. The daemon listens on `localhost:8765` and exposes three HTTP endpoints:
+
+- **`/mcp`** — the MCP tool surface that agents call directly. Provides tools for checkpointing sessions, listing sessions, restoring sessions, previewing handoff briefs, and searching session messages.
+- **`/ingest`** — an HTTP endpoint for pushing session data into Handshake programmatically. Used by the OpenCode JavaScript plugin to push session updates automatically.
+- **`/health`** — a simple liveness probe used by setup to confirm the daemon started correctly.
+
+Because the daemon binds only to `localhost`, it is not reachable from the network. All traffic stays on your machine.
+
+## How sync works
+
+Each agent integrates with Handshake through the MCP protocol. When you ask an agent to `checkpoint this session`, it calls the `checkpoint_session` MCP tool with its native session ID and agent type. Handshake then:
+
+1. **Reads the native session** — locates and parses the agent's own session storage (JSONL files, SQLite database, or session index) to extract the full message history.
+2. **Captures git state** — if the session has a working directory and that directory contains a git repository, Handshake records the current branch, staged files, and unstaged files.
+3. **Stores the session** — writes all messages and metadata into `~/.handshake/sessions.db`, a local SQLite database.
+
+Sync happens on demand when you checkpoint. Handshake does not poll or watch agent storage in the background — the checkpoint is an explicit action that gives you full control over when a snapshot is taken.
+
+## The handoff brief
+
+When you restore a session, Handshake generates a structured markdown document called a **handoff brief**. The brief is assembled entirely from stored data — Handshake does no LLM summarisation. It contains:
+
+- **Original goal** — the first user message from the session, which typically describes what you set out to build or fix.
+- **Current state & next steps** — a summary written by the source agent at checkpoint time. If the agent did not provide a summary, Handshake uses the most recent substantive assistant message instead.
+- **Settled decisions** — key choices made during the session that the receiving agent should treat as final and not relitigate (for example, "Use JWT over sessions" or "Postgres not SQLite").
+- **Conversation excerpt** — for sessions with 50 or fewer substantive messages, the full conversation is included (with tool output omitted). For longer sessions, Handshake samples 50 messages: the first 10 (original goal and early decisions), 20 from the centre (architectural decisions), and the last 20 (current state and recent work).
+
+The brief ends with explicit instructions for the receiving agent: read the goal and current state, treat settled decisions as final, and state your understanding of the current state and your intended next step before making any changes.
+
+## Git state
+
+At checkpoint time, Handshake captures the current state of the git repository in the session's working directory. This snapshot includes the current branch name, staged files, and unstaged files. Codex's own git capture (recorded in the session transcript) is also used when available.
+
+On restore, Handshake shows you a **restore packet** before injecting the handoff brief. The restore packet compares the saved git state against the current state of the working directory and reports any drift — files that were added, modified, or deleted since the checkpoint was made. This lets you understand what has changed before you start working and decide whether to stash, reset, or continue from the current state.
+
+## Agent integration methods
+
+Each agent has its own native session storage format. Handshake reads each one directly without requiring any changes to the agent's own data:
+
+| Agent | Integration method |
+| --- | --- |
+| **Claude Code** | Reads JSONL transcript files from `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`. Supports full content blocks including tool calls and tool results. |
+| **OpenCode** | JavaScript plugin installed at `~/.config/opencode/plugins/handshake.js` auto-pushes session data to the `/ingest` endpoint after each response. Also reads directly from the SQLite database at `~/.local/share/opencode/opencode.db`. |
+| **Hermes** | Reads directly from Hermes' SQLite state database at `~/.hermes/state.db` using a read-only connection with WAL-mode compatibility so reads are safe while Hermes is writing. |
+| **Codex** | Reads the session index at `~/.codex/session_index.jsonl` and parses JSONL transcript files from `~/.codex/sessions/YYYY/MM/DD/`. Sessions are auto-ingested when you run `list_sessions`. |
+
+## MCP tools
+
+The daemon exposes six MCP tools that agents call directly: `checkpoint_session`, `list_sessions`, `restore_session`, `generate_brief`, `search_session`, and `search_all_sessions`. For a full description of each tool's parameters and behaviour, see the [MCP Tools reference](/reference/mcp-tools).

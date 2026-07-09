@@ -1,0 +1,125 @@
+---
+title: "MCP Tools"
+sidebarTitle: "MCP Tools"
+description: "Reference for all six Handshake MCP tools: checkpoint_session, list_sessions, restore_session, generate_brief, search_session, and search_all_sessions."
+---
+
+Handshake exposes six MCP tools that your AI coding agents use to checkpoint, list, restore, and search sessions. These tools are registered automatically during `handshake setup` and are available in any agent that supports the Model Context Protocol. In normal use you interact with them through natural language — your agent translates "checkpoint this session" into the right tool call. This reference is for understanding exactly what each tool does and building custom integrations.
+
+<Note>
+  These tools are called automatically by your agent when you use natural language commands like "checkpoint this session" or "restore my auth refactor session". You only need to call them directly if you are building a custom integration.
+</Note>
+
+---
+
+## `checkpoint_session`
+
+Save the current session into Handshake so it can be restored from any other supported agent. Handshake reads the full conversation from the agent's native session storage and captures the current git state of the working directory.
+
+Returns a confirmation string with the session title and the number of messages checkpointed.
+
+### Parameters
+
+<ParamField path="session_id" type="string" required>
+  The agent's native session ID — the internal identifier your agent uses to refer to the current conversation.
+</ParamField>
+
+<ParamField path="agent" type="string" required>
+  Which agent this session belongs to. Must be one of: `claude-code`, `opencode`, `hermes`, `codex`.
+</ParamField>
+
+<ParamField path="title" type="string">
+  Optional human-readable title that overrides the session's native title. Useful for giving sessions memorable names before restoring them elsewhere.
+</ParamField>
+
+<ParamField path="summary" type="string">
+  Strongly recommended. A handoff summary written by the checkpointing agent — current state (what is done and verified, what is broken) and concrete next steps in order. This becomes the core of the handoff brief that the receiving agent reads.
+</ParamField>
+
+<ParamField path="decisions" type="string">
+  Key decisions made during this session that must not be relitigated, one per line. For example: `Use JWT over sessions\nPostgres not SQLite`. These are rendered as a dedicated "Settled Decisions" section in the handoff brief.
+</ParamField>
+
+---
+
+## `list_sessions`
+
+List recent checkpointed sessions as human-readable titles with the agent name and a relative timestamp (e.g. "2h ago"). Codex sessions are auto-synced from disk before the list is returned.
+
+### Parameters
+
+<ParamField path="agent" type="string">
+  Filter results to a specific agent. Must be one of: `claude-code`, `opencode`, `hermes`. Omit to list sessions from all agents.
+</ParamField>
+
+---
+
+## `restore_session`
+
+Restore a session by title (fuzzy matched). This tool uses a two-step confirmation flow to prevent accidental context injection.
+
+**First call** — returns a git drift packet showing what has changed in the working directory since the checkpoint was taken (branch, uncommitted files, commit count). Review this before proceeding.
+
+**Second call** — pass `confirmed: true` to inject the full handoff brief into the current agent's context.
+
+### Parameters
+
+<ParamField path="title" type="string" required>
+  Title or partial title of the session to restore. Matched with exact priority first, then substring, then all-words. The most recently updated match wins when multiple sessions match.
+</ParamField>
+
+<ParamField path="confirmed" type="boolean">
+  Set to `true` after reviewing the restore packet to inject the handoff brief. On the first call, omit this or set it to `false`.
+</ParamField>
+
+---
+
+## `generate_brief`
+
+Generate a handoff brief for a session without restoring it — useful for previewing what context would be injected, or for reading a summary of past work without switching into that session.
+
+### Parameters
+
+<ParamField path="title" type="string" required>
+  Title or partial title of the session. Matched the same way as `restore_session`.
+</ParamField>
+
+---
+
+## `search_session`
+
+Full-text search within a specific session's messages. Use this when the handoff brief does not contain the context you need — search for specific decisions, file names, error messages, or topics discussed in that session.
+
+### Parameters
+
+<ParamField path="title" type="string" required>
+  Title or partial title of the session to search within. Fuzzy matched the same way as `restore_session`.
+</ParamField>
+
+<ParamField path="query" type="string" required>
+  Search terms — words or phrases to find in the session messages.
+</ParamField>
+
+<ParamField path="limit" type="number">
+  Maximum number of results to return. Defaults to `5`.
+</ParamField>
+
+---
+
+## `search_all_sessions`
+
+Full-text search across all checkpointed sessions. Use this to find which session covered a particular topic, or to retrieve context from a session you have not identified by name yet.
+
+### Parameters
+
+<ParamField path="query" type="string" required>
+  Search terms — words or phrases to find across all session messages.
+</ParamField>
+
+<ParamField path="limit" type="number">
+  Maximum number of results to return. Defaults to `10`.
+</ParamField>
+
+<ParamField path="agent" type="string">
+  Filter results to a specific agent. Must be one of: `claude-code`, `opencode`, `hermes`, `codex`. Omit to search across all agents.
+</ParamField>

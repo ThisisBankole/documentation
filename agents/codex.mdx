@@ -1,0 +1,62 @@
+---
+title: "Codex"
+sidebarTitle: "Codex"
+description: "Set up Handshake with Codex to auto-ingest sessions on list, checkpoint with natural language, and restore your work across any supported agent."
+---
+
+Handshake integrates with Codex by reading its session index and transcript files directly. Codex sessions are automatically ingested into Handshake whenever you list sessions — you don't need to explicitly checkpoint for your sessions to appear.
+
+## How it works
+
+Codex stores sessions in two places:
+
+- **`~/.codex/session_index.jsonl`** — a line-delimited JSON index of all sessions, each entry containing the session ID, thread name (title), and last-updated timestamp.
+- **`~/.codex/sessions/YYYY/MM/DD/rollout-<datetime>-<id>.jsonl`** — the full transcript for each session, containing message records, tool calls, git state, and working directory.
+
+Handshake installs three event hooks into Codex:
+
+| Hook | What it does |
+| --- | --- |
+| `PreCompact` | Checkpoints the session before Codex compacts the transcript |
+| `PostCompact` | Captures the compaction summary after compaction |
+| `Stop` | Syncs the session at the end of each conversation turn |
+
+These hooks run as Python scripts in `~/.codex/hooks/` and are registered in `~/.codex/hooks.json`. Handshake is also registered as an MCP server in `~/.codex/config.toml` under the `[mcp_servers.handshake]` block.
+
+## Setup
+
+Run the setup wizard once:
+
+```bash
+handshake setup
+```
+
+The wizard registers the MCP server entry in `~/.codex/config.toml`, installs the three hook scripts into `~/.codex/hooks/`, and registers them in `~/.codex/hooks.json`. If a config file already exists it is backed up before being modified.
+
+<Note>
+  After setup, open Codex and run `/hooks` to trust the Handshake hook scripts. Codex requires explicit trust before executing hook commands.
+</Note>
+
+## Checkpointing
+
+You can checkpoint and restore sessions from inside Codex using natural language:
+
+<CodeGroup>
+
+```text Save the current session
+checkpoint this session
+```
+
+```text List saved sessions
+list my sessions
+```
+
+```text Restore a session
+restore my frontend refactor session
+```
+
+</CodeGroup>
+
+## Auto-ingestion
+
+Codex sessions are automatically synced to Handshake whenever you run `list my sessions` or `handshake list` from the CLI. Handshake reads `~/.codex/session_index.jsonl` and ingests any sessions it hasn't seen before — so your Codex history is always available even without an explicit checkpoint. Explicitly checkpointing a session with `checkpoint this session` adds a summary and decision log to the record, which produces a richer restore brief when you switch agents.

@@ -1,0 +1,89 @@
+---
+title: "Port"
+sidebarTitle: "Port"
+description: "Move Handshake to a different port when 8765 is already in use, or pin a specific port for consistent access across reinstalls. Covers macOS and Linux."
+---
+
+Handshake defaults to `localhost:8765`. If that port is already taken, the setup wizard detects the conflict and picks the next free port automatically — you don't need to do anything in the common case. If you want explicit control over which port Handshake uses, follow the steps below.
+
+## Automatic port detection
+
+When you run `handshake setup`, Handshake checks whether port 8765 is free. If it isn't, the wizard scans upward from 8765 — checking up to 100 ports — and selects the first available one. All agents are then registered with the chosen URL, so everything works without any manual steps on your part.
+
+<Note>
+  If a Handshake daemon is already running on 8765, the wizard recognizes it and reuses that address rather than treating it as a conflict. Re-running `handshake setup` is safe and won't migrate you to a different port unexpectedly.
+</Note>
+
+## Pin a specific port
+
+If you want to choose a port rather than let the wizard pick one, set both environment variables before running setup:
+
+```bash
+export HANDSHAKE_ADDR=localhost:8766
+export HANDSHAKE_URL=http://localhost:8766/mcp
+handshake setup
+```
+
+The wizard reads `HANDSHAKE_ADDR` first. When it's set, the wizard skips the automatic scan and uses that address directly, then auto-derives the MCP URL from it if `HANDSHAKE_URL` isn't also set.
+
+## Change the port on an existing install (macOS)
+
+If Handshake is already installed as a launchd service and you need to move it to a different port, edit the plist file to set the environment variables, then reload the service:
+
+<Steps>
+  <Step title="Edit the launchd plist">
+    Open `~/Library/LaunchAgents/com.handshake.serve.plist` and add an `EnvironmentVariables` block:
+
+    ```xml
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>HANDSHAKE_ADDR</key><string>localhost:8766</string>
+      <key>HANDSHAKE_URL</key><string>http://localhost:8766/mcp</string>
+    </dict>
+    ```
+  </Step>
+  <Step title="Reload the service">
+    ```bash
+    launchctl unload ~/Library/LaunchAgents/com.handshake.serve.plist
+    launchctl load  ~/Library/LaunchAgents/com.handshake.serve.plist
+    ```
+  </Step>
+  <Step title="Re-register agents">
+    Run setup again so all agent configs are updated with the new MCP URL:
+
+    ```bash
+    handshake setup
+    ```
+  </Step>
+</Steps>
+
+## Change the port on Linux
+
+If Handshake is running as a systemd user service, edit the service unit file to add the environment variables, reload the daemon, and then re-register your agents:
+
+<Steps>
+  <Step title="Edit the service file">
+    Open the unit file (typically `~/.config/systemd/user/handshake.service`) and add an `Environment` line under `[Service]`:
+
+    ```ini
+    [Service]
+    Environment=HANDSHAKE_ADDR=localhost:8766
+    Environment=HANDSHAKE_URL=http://localhost:8766/mcp
+    ```
+  </Step>
+  <Step title="Reload and restart">
+    ```bash
+    systemctl --user daemon-reload
+    systemctl --user restart handshake
+    ```
+  </Step>
+  <Step title="Re-register agents">
+    ```bash
+    handshake setup
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  After changing the port you must run `handshake setup` again. Each agent stores the MCP URL at registration time — they won't automatically discover the new address until you re-run setup.
+</Warning>

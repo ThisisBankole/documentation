@@ -1,0 +1,39 @@
+---
+title: "Environment Variables"
+sidebarTitle: "Env Variables"
+description: "Complete reference for HANDSHAKE_ADDR and HANDSHAKE_URL — the two variables that control where the Handshake daemon listens and what URL agents connect to."
+---
+
+Handshake reads two environment variables at startup to determine where the daemon listens and what URL is registered with each agent. Both have sensible defaults, so you only need to set them when the defaults conflict with something else on your machine.
+
+## Variables
+
+<ParamField query="HANDSHAKE_ADDR" default="localhost:8765" type="string">
+  The address the Handshake daemon binds to. Use `host:port` format. The host must be `localhost` (or `127.0.0.1`) — Handshake intentionally does not bind to external interfaces.
+
+  **Example:** `localhost:8766`
+</ParamField>
+
+<ParamField query="HANDSHAKE_URL" default="http://localhost:8765/mcp" type="string">
+  The MCP endpoint URL that is registered with each agent during `handshake setup`. Agents use this URL to reach Handshake's MCP server. This value must match `HANDSHAKE_ADDR` — if they point to different ports, agents won't be able to connect.
+
+  **Example:** `http://localhost:8766/mcp`
+</ParamField>
+
+## Notes
+
+Both variables are read at daemon startup via `handshake serve`. Changing them in your shell after the daemon is already running has no effect — restart the daemon (or the login service) for changes to take effect.
+
+When you set `HANDSHAKE_ADDR` without setting `HANDSHAKE_URL`, the setup wizard automatically derives the MCP URL from the address. It's still good practice to set both explicitly to avoid ambiguity.
+
+## Example: use a custom port for setup
+
+Set both variables together before running the setup wizard:
+
+```bash
+export HANDSHAKE_ADDR=localhost:8766
+export HANDSHAKE_URL=http://localhost:8766/mcp
+handshake setup
+```
+
+The wizard will bind the daemon to port 8766, register all agents with `http://localhost:8766/mcp`, and install the login service with those variables baked in.

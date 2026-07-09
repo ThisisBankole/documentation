@@ -1,0 +1,129 @@
+---
+title: "Uninstall"
+sidebarTitle: "Uninstall"
+description: "Step-by-step guide to removing Handshake: stops the daemon, deregisters from all agents, and optionally deletes your session history and binary."
+---
+
+Uninstalling Handshake removes it from all agent configurations, stops the background daemon, and optionally deletes the session database and the binary. The process takes about ten seconds and guides you through each decision with prompts.
+
+---
+
+## Uninstall Command
+
+Run the following from any terminal:
+
+```bash
+handshake uninstall
+```
+
+The command performs these steps in order:
+
+<Steps>
+  <Step title="Stop the daemon">
+    Stops any running `handshake serve` process and removes the login service (launchd on macOS, systemd on Linux).
+  </Step>
+  <Step title="Deregister from all agents">
+    Removes the Handshake MCP entry from Claude Code, OpenCode, Hermes, and Codex configuration files.
+  </Step>
+  <Step title="Prompt to delete session history">
+    Asks whether to delete the `~/.handshake` directory and everything in it. Your session history is preserved if you answer no.
+
+    ```text
+    Delete session database? Your session history will be lost. [y/N]
+    ```
+  </Step>
+  <Step title="Prompt to remove the binary">
+    Asks whether to remove the `handshake` binary from your machine.
+
+    ```text
+    Remove the handshake binary from your machine? [y/N]
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Keep Your Session History
+
+If you answer **no** to deleting the database, your sessions remain at `~/.handshake/sessions.db`. Reinstall Handshake at any time and your full session history will be there waiting:
+
+```bash
+# Reinstall
+brew install ThisisBankole/tools/handshake
+handshake setup
+```
+
+Handshake detects the existing database and picks up where you left off.
+
+---
+
+## Homebrew Uninstall
+
+If you installed Handshake via Homebrew, the uninstall command detects this automatically. When you agree to remove the binary, it runs `brew uninstall handshake` instead of deleting the file directly:
+
+```text
+Detected Homebrew install — running brew uninstall handshake...
+✓ Binary removed via Homebrew
+```
+
+You do not need to run `brew uninstall` yourself — `handshake uninstall` handles it.
+
+---
+
+## Manual Removal
+
+If something goes wrong with the uninstall command, you can remove Handshake by hand:
+
+<Steps>
+  <Step title="Stop the daemon">
+    ```bash
+    pkill -f 'handshake serve'
+    ```
+  </Step>
+  <Step title="Remove the login service">
+    **macOS:**
+
+    ```bash
+    launchctl unload ~/Library/LaunchAgents/com.handshake.daemon.plist
+    rm ~/Library/LaunchAgents/com.handshake.daemon.plist
+    ```
+
+    **Linux:**
+
+    ```bash
+    systemctl --user stop handshake
+    systemctl --user disable handshake
+    rm ~/.config/systemd/user/handshake.service
+    ```
+  </Step>
+  <Step title="Remove the binary">
+    ```bash
+    rm $(which handshake)
+    ```
+  </Step>
+  <Step title="Delete session data">
+    ```bash
+    rm -rf ~/.handshake
+    ```
+  </Step>
+  <Step title="Remove agent config entries">
+    Open each agent's config file and remove the Handshake MCP server entry. The entry looks like:
+
+    ```json
+    {
+      "handshake": {
+        "type": "http",
+        "url": "http://localhost:8765/mcp"
+      }
+    }
+    ```
+
+    Config file locations vary by agent. Check each agent's documentation for the path.
+  </Step>
+</Steps>
+
+---
+
+<Tip>
+  If you just want to stop Handshake temporarily without uninstalling, use `handshake uninstall-service` to remove the login service. Your agent registrations stay in place and you can restart the daemon at any time with `handshake serve` or re-install the service with `handshake install-service`.
+</Tip>

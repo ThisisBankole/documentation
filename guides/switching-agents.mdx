@@ -1,0 +1,116 @@
+---
+title: "Switching Agents"
+sidebarTitle: "Switching Agents"
+description: "Restore a checkpointed session and pick up exactly where you left off."
+---
+
+When you hit a token limit, want to try a different model, or simply prefer a different agent for a particular task, Handshake lets you switch without starting over. Restore a checkpointed session in your new agent and it picks up with the original goal, the decisions already made, the current state of the work, and a summary of what to do next — all delivered in a structured handoff brief.
+
+## List your sessions
+
+Before you restore, you can check what sessions are available.
+
+<Tabs>
+  <Tab title="Inside your agent">
+    Ask your agent to show your sessions:
+
+    ```text
+    list my sessions
+    ```
+
+    Your agent calls the `list_sessions` MCP tool and returns something like:
+
+    ```text
+    Recent sessions:
+    - auth refactor (claude-code, 2h ago)
+    - council budget spending tracker (opencode, 1d ago)
+    - payment webhook integration (hermes, 3d ago)
+    ```
+  </Tab>
+  <Tab title="CLI">
+    Run `handshake list` in your terminal:
+
+    ```bash
+    handshake list
+    ```
+
+    ```text
+    Recent sessions:
+    - auth refactor (claude-code)
+    - council budget spending tracker (opencode)
+    - payment webhook integration (hermes)
+    ```
+  </Tab>
+</Tabs>
+
+## Restore a session
+
+Once you know which session you want to continue, restore it in your new agent.
+
+<Tabs>
+  <Tab title="Inside your agent">
+    Tell your new agent to restore the session by name:
+
+    ```text
+    restore my auth refactor session
+    ```
+
+    Handshake fuzzy-matches the title and injects the handoff brief into the conversation. You don't need to use the exact title — a close description is enough.
+  </Tab>
+  <Tab title="CLI">
+    Use `handshake restore` with a title:
+
+    ```bash
+    handshake restore "auth refactor"
+    ```
+
+    The CLI shows the restore packet (git drift since checkpoint) and asks for confirmation before injecting the handoff brief:
+
+    ```text
+    ## Restore Packet — auth refactor
+    Checkpointed from claude-code on 2025-07-14 at 14:32
+    
+    Branch: main
+    Staged:   src/auth/middleware.go
+    Unstaged: src/auth/routes.go
+    
+    Inject this context? [Y/n]
+    ```
+
+    Press Enter (or `Y`) to inject the brief.
+  </Tab>
+</Tabs>
+
+<Note>
+  Session titles are fuzzy-matched, so `restore my council spending session` works even if the session is titled "council budget spending tracker". Handshake checks for an exact match first, then a substring match, then checks whether the title contains all the words in your query.
+</Note>
+
+## The restore flow
+
+Handshake uses a two-step flow when restoring to give you a chance to review what has changed before context is injected.
+
+<Steps>
+  <Step title="Review the git drift packet">
+    On the first call, Handshake shows you a **restore packet** — a summary of the git state at checkpoint time and what has changed since then. This tells you if files were modified, if you're on the right branch, and what staged changes exist. The receiving agent sees this before the handoff brief is injected.
+  </Step>
+  <Step title="Confirm the restore">
+    After reviewing the drift, confirm the restore. In-agent, call `restore_session` again with `confirmed=true`. In the CLI, press Enter at the prompt. Handshake then injects the full handoff brief.
+  </Step>
+  <Step title="Agent picks up the work">
+    The receiving agent reads the handoff brief — original goal, current state, settled decisions, and conversation transcript — and resumes from where the previous agent left off. It states its understanding of the current state before making any changes.
+  </Step>
+</Steps>
+
+## Multiple matches
+
+If your query matches more than one session, Handshake uses the most recently updated one and lists the others so you're aware of them.
+
+```text
+Restoring session 'auth refactor'. Continue the work described in this handoff brief:
+
+...
+
+_Note: other sessions also matched: auth refactor v2 (claude-code, 5d ago); auth middleware refactor (opencode, 1w ago)_
+```
+
+If you wanted one of the alternatives, use a more specific title in your next restore call — for example, `restore auth refactor v2`.

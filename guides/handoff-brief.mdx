@@ -1,0 +1,140 @@
+---
+title: "Handoff Brief"
+sidebarTitle: "Handoff Brief"
+description: "Learn what sections make up a Handshake handoff brief — original goal, current state, decisions, and transcript — and how the receiving agent uses it."
+---
+
+The handoff brief is a structured markdown document Handshake generates when you restore a session. It gives the receiving agent everything it needs to continue your work — the original goal, the current state, the key decisions that have already been made, and a conversation transcript that captures how the session evolved. No setup, no manual copy-pasting, and no re-explaining the context from scratch.
+
+## Brief structure
+
+Every handoff brief follows the same structure. Here is what each section contains and where it comes from.
+
+<Accordion title="Header">
+  The brief opens with a metadata block drawn from the session record:
+
+  - **Source agent** — which agent the session came from (e.g. `claude-code`)
+  - **Working directory** — the filesystem path the session was working in
+  - **Model** — the model the source agent was using
+  - **Started** — timestamp for when the session began
+  - **Last active** — timestamp for the most recent update
+  - **Messages** — total number of messages in the session
+
+  This gives the receiving agent immediate orientation — it knows where to look on disk and what has already been set up.
+</Accordion>
+
+<Accordion title="Original Goal">
+  The first user message of the session, clipped to 600 characters. This anchors the brief — the receiving agent sees the problem statement as it was originally framed, before any decisions or implementation narrowed the scope.
+</Accordion>
+
+<Accordion title="Current State & Next Steps">
+  This section comes directly from the `summary` field you provided at checkpoint time. It should describe what is done and verified, what is broken or incomplete, and what the concrete next steps are in order.
+
+  If no summary was provided, Handshake falls back to the last substantive assistant message in the conversation. That fallback is less precise — it's the reason why including a summary at checkpoint time produces much better briefs.
+
+  The section heading reflects the source: it reads **"Current State & Next Steps (written by the source agent)"** when a summary was provided, or **"Latest State (last assistant message)"** when using the fallback.
+</Accordion>
+
+<Accordion title="Settled Decisions">
+  Key decisions from the `decisions` field you provided at checkpoint time, formatted as a bullet list. Each decision is one item — for example:
+
+  - Use JWT over sessions
+  - Postgres not SQLite
+  - No refresh token rotation for v1
+
+  The "Instructions for the Receiving Agent" section explicitly tells the receiving agent to treat these as settled and not relitigate them.
+</Accordion>
+
+<Accordion title="Conversation">
+  The message transcript, with tool output stripped to reduce noise. Handshake uses two modes depending on session length:
+
+  - **Full transcript** (≤50 substantive messages) — every user and assistant message is included, in order.
+  - **Sampled transcript** (\>50 substantive messages) — 50 messages are selected from three zones: the first 10 messages (original goal and early decisions), 20 messages from the middle of the session (architectural decisions), and the last 20 messages (recent work and current state).
+
+  In sampled mode the transcript is split into **Beginning**, **Middle**, and **Recent** sections, each clipped at 900 characters per message to keep the brief readable.
+</Accordion>
+
+<Accordion title="Instructions for the Receiving Agent">
+  The brief closes with a short instruction block addressed directly to the receiving agent. It tells the agent to:
+
+  - Continue the session from the working directory recorded in the checkpoint
+  - Read the goal and current state, then pick up where the previous agent left off
+  - Treat decisions already made in the conversation as settled — not to relitigate them
+  - State its understanding of the current state and its intended next step in one or two sentences before making any changes
+</Accordion>
+
+## Git drift packet
+
+Before the handoff brief is injected, Handshake shows you a **restore packet** — a snapshot of the git state recorded at checkpoint time compared against the current state of the working directory. This tells you what has changed since the checkpoint was saved.
+
+```text
+## Restore Packet — auth refactor
+Checkpointed from claude-code on 2025-07-14 at 14:32
+
+Branch: main
+Staged:   src/auth/middleware.go
+Unstaged: src/auth/routes.go, src/auth/tokens.go
+```
+
+The restore packet appears before the brief so you (and the receiving agent) understand the ground truth of the codebase before diving into the context. Once you confirm the restore, the full handoff brief is injected.
+
+## Preview a brief without restoring
+
+You can generate and read a brief for any session without triggering a restore. This is useful for reviewing the context before deciding whether to switch agents, or for sharing session state without handing it off.
+
+<Tabs>
+  <Tab title="Inside your agent">
+    Ask your agent to show you the brief:
+
+    ```text
+    show me the brief for my auth refactor session
+    ```
+
+    Your agent calls the `generate_brief` MCP tool and returns the full brief in the conversation.
+  </Tab>
+  <Tab title="MCP tool">
+    Call `generate_brief` directly:
+
+    ```json
+    {
+      "title": "auth refactor"
+    }
+    ```
+
+    The title is fuzzy-matched — a partial title or a few words from it is enough.
+  </Tab>
+</Tabs>
+
+## Tips for better briefs
+
+The quality of a handoff brief depends directly on the quality of the checkpoint. These three habits make a significant difference.
+
+<CardGroup cols={1}>
+  <Card title="Always include a summary" icon="pen-to-square">
+    The `summary` field becomes the "Current State & Next Steps" section — the first thing the receiving agent reads after the original goal. Write it as a direct handoff note: what is done and verified, what is in progress, and what the next concrete steps are. Without a summary, Handshake falls back to the last assistant message, which is often less precise.
+
+    ```text
+    checkpoint this session. Current state: JWT middleware is wired into all 
+    protected routes and tested. Next: write integration tests for token 
+    refresh and add rate limiting to the auth endpoints.
+    ```
+  </Card>
+
+  <Card title="Record decisions that should not be revisited" icon="gavel">
+    The `decisions` field creates a dedicated section the receiving agent is explicitly told to respect. Use it for choices that took deliberation — architectural decisions, library choices, constraints imposed by the environment. One decision per line.
+
+    ```text
+    checkpoint this session. Decisions: Use JWT over sessions
+    Postgres not SQLite
+    No refresh token rotation for v1
+    ```
+  </Card>
+
+  <Card title="Use descriptive session titles" icon="tag">
+    Titles are how you (and your agents) look up sessions later. A title like "auth refactor" is faster to restore and easier to remember than a generated ID. Set a title at checkpoint time:
+
+    ```text
+    checkpoint this session as "payment webhook rate limiting"
+    ```
+  </Card>
+</CardGroup>

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Handshake",
+  "theme": "luma",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "how-it-works"
+            ]
+          },
+          {
+            "group": "Using Handshake",
+            "pages": [
+              "guides/checkpointing",
+              "guides/switching-agents",
+              "guides/searching-sessions",
+              "guides/handoff-brief"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/overview",
+              "configuration/port",
+              "configuration/environment-variables"
+            ]
+          },
+          {
+            "group": "Supported Agents",
+            "pages": [
+              "agents/claude-code",
+              "agents/opencode",
+              "agents/hermes",
+              "agents/codex"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/cli",
+              "reference/mcp-tools",
+              "reference/privacy",
+              "reference/uninstall"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/ThisisBankole/handshake"
+    }
+  },
+  "fonts": {
+    "family": "Geist"
+  }
+}
