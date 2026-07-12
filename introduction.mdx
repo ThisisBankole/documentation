@@ -1,20 +1,20 @@
 ---
 title: "Introduction"
 sidebarTitle: "Introduction"
-description: "Handshake is a local-first daemon that makes AI coding sessions portable across  coding agents with no cloud required."
+description: "Handshake keeps your AI coding sessions in sync across every coding agent you use."
 ---
 
 Handshake is a local-first daemon that makes your AI coding sessions portable. When you hit a token limit, want to try a different model, or simply prefer a different agent for a particular task, you shouldn't have to start over. Handshake hooks into each agent's native event system, captures your session automatically, and generates a structured handoff brief so the next agent can pick up exactly where the last one stopped.
 
 ## What Handshake does
 
-Handshake runs as a background daemon on `localhost:8765`. It registers itself with each supported agent using the MCP protocol, which means agents treat it as a tool they can call — no manual export, no copy-pasting. Every time you checkpoint a session, Handshake reads the conversation directly from the agent's native session storage, captures the current git state of your working directory, and stores everything locally in `~/.handshake/sessions.db`.
+Handshake runs as a background daemon. It registers itself with each supported agent using the MCP protocol, which means agents treat it as a tool they can call - no manual export, no copy-pasting. Every time you checkpoint a session, Handshake reads the conversation directly from the agent's native session storage, captures the current git state of your working directory, and stores everything locally in `~/.handshake/sessions.db`.
 
-When you restore a session in a new agent, Handshake generates a handoff brief — a structured summary that gives the receiving agent the full picture: your original goal, the current state, settled decisions, and a conversation excerpt. The new agent reads the brief and continues the work as if it had been there from the start.
+When you restore a session in a new agent, Handshake generates a handoff brief - a structured summary that gives the receiving agent the full picture: your original goal, the current state, settled decisions, and a conversation excerpt. The new agent reads the brief and continues the work as if it had been there from the start.
 
 ## Supported agents
 
-Handshake integrates natively with all four major AI coding agents:
+Handshake integrates natively with the following:
 
 - **Claude Code** — reads JSONL transcript files from `~/.claude/projects/`
 - **OpenCode** — reads from OpenCode's SQLite database at `~/.local/share/opencode/opencode.db`

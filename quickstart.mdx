@@ -4,7 +4,7 @@ sidebarTitle: "Quickstart"
 description: "Install Handshake with a single curl command or via Homebrew, run the setup wizard, and checkpoint your first session in about a minute."
 ---
 
-Handshake installs as a single binary and configures itself automatically. By the end of this guide you will have a running daemon, your agents registered, and your first session checkpointed — all in about a minute.
+Handshake installs as a single binary and configures itself automatically. By the end of this guide you will have a running daemon, your agents registered, and your first session checkpointed.
 
 <Steps>
   <Step title="Install Handshake">
@@ -49,35 +49,35 @@ Handshake installs as a single binary and configures itself automatically. By th
       Handshake defaults to `localhost:8765`. If that port is already in use, setup detects the conflict automatically, picks the next free port, and registers all agents with the new address. No manual action needed.
     </Note>
   </Step>
-  <Step title="Make your first checkpoint">
-    Inside any supported agent — Claude Code, OpenCode, Hermes, or Codex — tell it to save the session:
+  <Step title="Start a session in any agent">
+    Open any supported agent; Claude Code, OpenCode, Hermes, or Codex and start working as you normally would. Handshake syncs the session automatically in the background every time the agent produces a response. There is nothing to run and no prompt to send.
 
-    ```text
-    checkpoint this session
-    ```
-
-    Handshake reads the full conversation from the agent's native storage, captures your current git branch and file changes, and stores everything locally.
-
-    You can also see your checkpointed sessions from the terminal at any time:
+    You can see your checkpointed sessions from the terminal at any time:
 
     ```bash
-    handshake list
+    handshake browse
     ```
+
+    <Tip>
+      If you want to attach a title, summary, or explicit decisions to a specific moment (for example, right before handing off to another agent), you can create a [manual checkpoint](/guides/checkpointing#manual-checkpoints). Otherwise, automatic sync has you covered.
+    </Tip>
   </Step>
   <Step title="Restore from another agent">
-    Open a different agent and restore the session by name:
+    Open the consumer agent and restore the session by name.
+
+    Start with:
+
+    ```text
+    list my handshake sessions
+    ```
+
+    Then prompt the agent:
 
     ```text
     restore my <session name> session
     ```
 
-    The agent receives a full handoff brief — your original goal, current state, settled decisions, and a conversation excerpt — and continues the work from where the previous agent stopped.
-
-    You can also restore from the CLI:
-
-    ```bash
-    handshake restore "my session title"
-    ```
+    The agent receives a full handoff brief - your original goal, current state, settled decisions, and a conversation excerpt  - and continues the work from where the previous agent stopped.
   </Step>
 </Steps>
 
