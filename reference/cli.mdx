@@ -10,7 +10,9 @@ The `handshake` CLI is the primary way to install, manage, and interact with the
 
 ### `handshake setup`
 
-Run the guided onboarding wizard. This is the recommended first step after installing Handshake. The wizard walks you through three steps: creating the session database and registering with your agents, installing Handshake as a login service, and starting the daemon. It also detects port conflicts automatically and picks the next free port if `localhost:8765` is already in use.
+Run the guided onboarding wizard. This is the recommended first step after installing Handshake. The wizard walks you through three steps: creating the session database and registering with your agents, installing Handshake as a login service, and starting the daemon. Step one also offers [automatic project knowledge](/guides/project-knowledge) — pick a background writer or skip it. It detects port conflicts automatically and picks the next free port if `localhost:8765` is already in use.
+
+When the wizard completes for the first time on a machine, Handshake sends a one-time anonymous install ping (version, OS, and agent names only) — see the [Privacy page](/reference/privacy#anonymous-usage-ping) for details and the opt-out.
 
 ```bash
 handshake setup
@@ -24,7 +26,7 @@ handshake setup
 
 ### `handshake init`
 
-Non-interactive setup. Creates the session database, installs the OpenCode plugin, and registers Handshake as an MCP server with all supported agents — without any prompts. Used internally by the install script and useful in automated environments.
+Non-interactive setup. Creates the session database, installs the OpenCode plugin, and registers Handshake as an MCP server with all supported agents — without any prompts. Used internally by the install script and useful in automated environments. Unlike the wizard, `init` does not configure project knowledge and does not send the anonymous install ping, so CI and scripted installs are never counted.
 
 ```bash
 handshake init
@@ -172,7 +174,7 @@ handshake uninstall-service
 
 ### `handshake uninstall`
 
-Remove Handshake from your machine. This command stops the daemon, removes the login service, deregisters Handshake from all agent configs (Claude Code, OpenCode, Hermes, and Codex), and then prompts you to optionally delete the session database and the binary.
+Remove Handshake from your machine. This command stops the daemon, removes the login service, deregisters Handshake from all agent configs (Claude Code, OpenCode, Hermes, Codex, and Cursor), and then prompts you to optionally delete the session database and the binary.
 
 ```bash
 handshake uninstall

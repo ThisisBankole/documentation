@@ -1,0 +1,48 @@
+---
+title: "Cursor"
+sidebarTitle: "Cursor"
+description: "Set up Handshake with Cursor to sync sessions automatically at the end of each turn and restore your work across any supported agent."
+---
+
+Handshake integrates with Cursor through its MCP support and agent hooks. Sessions sync automatically at the end of each conversation turn, and you can checkpoint, search, and restore with natural language like in any other supported agent.
+
+## How it works
+
+Handshake registers two things with Cursor:
+
+- **MCP server** — added to `~/.cursor/mcp.json` under `mcpServers.handshake`, pointing at `http://localhost:8765/mcp` (or your configured port). This gives Cursor the checkpoint, restore, and search tools.
+- **Stop hook** — a Python script at `~/.cursor/hooks/handshake_cursor_stop.py`, registered in `~/.cursor/hooks.json`. It fires when the agent finishes a turn and syncs the session to Handshake, so your Cursor history is captured without explicit checkpoints.
+
+Existing config files are backed up before being modified.
+
+## Setup
+
+Run the setup wizard once:
+
+```bash
+handshake setup
+```
+
+Cursor is detected when the `cursor-agent` CLI is on your PATH or a `~/.cursor` directory exists. The hook requires Python 3; without it, MCP registration still works and you can checkpoint manually.
+
+## Checkpointing
+
+From inside Cursor, use natural language:
+
+<CodeGroup>
+
+```text Save the current session
+checkpoint this session
+```
+
+```text List saved sessions
+list my sessions
+```
+
+```text Restore a session
+restore my frontend refactor session
+```
+
+</CodeGroup>
+
+Explicitly checkpointing adds a handoff summary and decision log to the record, which produces a richer restore brief than the automatic turn-end sync alone.

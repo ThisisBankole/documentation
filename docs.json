@@ -28,7 +28,8 @@
               "guides/using-the-tui",
               "guides/switching-agents",
               "guides/searching-sessions",
-              "guides/handoff-brief"
+              "guides/handoff-brief",
+              "guides/project-knowledge"
             ]
           },
           {
@@ -45,7 +46,8 @@
               "agents/claude-code",
               "agents/opencode",
               "agents/hermes",
-              "agents/codex"
+              "agents/codex",
+              "agents/cursor"
             ]
           },
           {

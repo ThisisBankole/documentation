@@ -1,10 +1,10 @@
 ---
 title: "MCP Tools"
 sidebarTitle: "MCP Tools"
-description: "Reference for all six Handshake MCP tools: checkpoint_session, list_sessions, restore_session, generate_brief, search_session, and search_all_sessions."
+description: "Reference for all nine Handshake MCP tools: checkpoint_session, list_sessions, restore_session, generate_brief, search_session, search_all_sessions, get_project_knowledge_context, publish_project_knowledge, and get_handshake_update_status."
 ---
 
-Handshake exposes six MCP tools that your AI coding agents use to checkpoint, list, restore, and search sessions. These tools are registered automatically during `handshake setup` and are available in any agent that supports the Model Context Protocol. In normal use you interact with them through natural language — your agent translates "checkpoint this session" into the right tool call. This reference is for understanding exactly what each tool does and building custom integrations.
+Handshake exposes nine MCP tools that your AI coding agents use to checkpoint, list, restore, and search sessions, and to author project knowledge. These tools are registered automatically during `handshake setup` and are available in any agent that supports the Model Context Protocol. In normal use you interact with them through natural language — your agent translates "checkpoint this session" into the right tool call. This reference is for understanding exactly what each tool does and building custom integrations.
 
 <Note>
   These tools are called automatically by your agent when you use natural language commands like "checkpoint this session" or "restore my auth refactor session". You only need to call them directly if you are building a custom integration.
@@ -49,7 +49,7 @@ List recent checkpointed sessions as human-readable titles with the agent name a
 ### Parameters
 
 <ParamField path="agent" type="string">
-  Filter results to a specific agent. Must be one of: `claude-code`, `opencode`, `hermes`. Omit to list sessions from all agents.
+  Filter results to a specific agent. Must be one of: `claude-code`, `opencode`, `hermes`, `codex`, `cursor`. Omit to list sessions from all agents.
 </ParamField>
 
 ---
@@ -121,5 +121,61 @@ Full-text search across all checkpointed sessions. Use this to find which sessio
 </ParamField>
 
 <ParamField path="agent" type="string">
-  Filter results to a specific agent. Must be one of: `claude-code`, `opencode`, `hermes`, `codex`. Omit to search across all agents.
+  Filter results to a specific agent. Must be one of: `claude-code`, `opencode`, `hermes`, `codex`, `cursor`. Omit to search across all agents.
 </ParamField>
+
+---
+
+## `get_project_knowledge_context`
+
+Get the project ID, current facts revision, and AI-document freshness for a working directory. Agents call this before authoring project knowledge — the returned `project_id` and `facts_revision` are required inputs to `publish_project_knowledge`. See the [Project Knowledge guide](/guides/project-knowledge).
+
+### Parameters
+
+<ParamField path="working_dir" type="string" required>
+  Repository or project working directory.
+</ParamField>
+
+---
+
+## `publish_project_knowledge`
+
+Publish an AI-authored project brief or repository map based on a specific factual knowledge revision. Handshake rejects stale revisions, so an agent working from an outdated picture cannot overwrite current project knowledge. On success the document is written into the project's knowledge bundle with verified provenance frontmatter.
+
+### Parameters
+
+<ParamField path="project_id" type="string" required>
+  Handshake project ID, as returned by `get_project_knowledge_context`.
+</ParamField>
+
+<ParamField path="type" type="string" required>
+  Document type. Must be one of: `project-brief`, `repo-map`.
+</ParamField>
+
+<ParamField path="facts_revision" type="number" required>
+  The factual revision used to author this document. Must match the current revision or the publication is rejected.
+</ParamField>
+
+<ParamField path="content" type="string" required>
+  Markdown body only — Handshake adds the provenance frontmatter and the document heading.
+</ParamField>
+
+<ParamField path="evidence" type="string">
+  Optional short description of the factual documents consulted.
+</ParamField>
+
+<ParamField path="source_commit" type="string">
+  Optional git commit used as evidence.
+</ParamField>
+
+<ParamField path="source_session_id" type="string">
+  Optional source session ID that informed the document.
+</ParamField>
+
+---
+
+## `get_handshake_update_status`
+
+Get Handshake's cached update status: the installed version, the latest known release, and whether an update is available. This never contacts the network — it reads the result of the daemon's weekly release check.
+
+Takes no parameters.

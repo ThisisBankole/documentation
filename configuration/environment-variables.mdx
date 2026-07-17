@@ -1,10 +1,10 @@
 ---
 title: "Environment Variables"
 sidebarTitle: "Env Variables"
-description: "Complete reference for HANDSHAKE_ADDR and HANDSHAKE_URL — the two variables that control where the Handshake daemon listens and what URL agents connect to."
+description: "Complete reference for the environment variables Handshake reads: HANDSHAKE_ADDR, HANDSHAKE_URL, HANDSHAKE_NO_TELEMETRY, and CODEX_HOME."
 ---
 
-Handshake reads two environment variables at startup to determine where the daemon listens and what URL is registered with each agent. Both have sensible defaults, so you only need to set them when the defaults conflict with something else on your machine.
+Handshake reads a small set of environment variables. All have sensible defaults, so you only need to set them when the defaults conflict with something else on your machine — or to opt out of the anonymous usage ping.
 
 ## Variables
 
@@ -18,6 +18,16 @@ Handshake reads two environment variables at startup to determine where the daem
   The MCP endpoint URL that is registered with each agent during `handshake setup`. Agents use this URL to reach Handshake's MCP server. This value must match `HANDSHAKE_ADDR` — if they point to different ports, agents won't be able to connect.
 
   **Example:** `http://localhost:8766/mcp`
+</ParamField>
+
+<ParamField query="HANDSHAKE_NO_TELEMETRY" type="string">
+  Set to any non-empty value (conventionally `1`) to disable the anonymous usage ping entirely — the one-time install event, the weekly heartbeat, and creation of the `~/.handshake/telemetry_id` file. See the [Privacy page](/reference/privacy#anonymous-usage-ping) for exactly what the ping contains.
+
+  **Example:** `HANDSHAKE_NO_TELEMETRY=1`
+</ParamField>
+
+<ParamField query="CODEX_HOME" type="string" default="~/.codex">
+  Where Handshake looks for the Codex configuration directory during agent registration. Set this if your Codex install uses a non-default home — Handshake writes the MCP entry, hooks, and skills there instead of `~/.codex`.
 </ParamField>
 
 ## Notes

@@ -27,6 +27,10 @@ Handshake installs as a single binary and configures itself automatically. By th
     ```
 
     </CodeGroup>
+
+    <Tip>
+      Re-running the curl command later upgrades Handshake in place — it installs the new binary and restarts the running daemon automatically.
+    </Tip>
   </Step>
   <Step title="Run the setup wizard">
     Run the setup wizard to get Handshake ready:
@@ -37,7 +41,7 @@ Handshake installs as a single binary and configures itself automatically. By th
 
     The wizard walks you through three steps:
 
-    1. **Create the database** — initialises `~/.handshake/sessions.db` and registers Handshake with each agent on your machine (Claude Code, OpenCode, Hermes, and Codex).
+    1. **Create the database** — initialises `~/.handshake/sessions.db`, registers Handshake with each agent on your machine (Claude Code, OpenCode, Hermes, Codex, and Cursor), and offers optional [automatic project knowledge](/guides/project-knowledge).
     2. **Install as a background service** — installs Handshake as a launchd agent (macOS) or systemd user service (Linux) so the daemon starts automatically every time you log in.
     3. **Start the daemon** — starts Handshake immediately so you don't have to log out first. If the service was installed, the daemon is already running and this step just verifies it.
 
@@ -50,7 +54,7 @@ Handshake installs as a single binary and configures itself automatically. By th
     </Note>
   </Step>
   <Step title="Start a session in any agent">
-    Open any supported agent; Claude Code, OpenCode, Hermes, or Codex and start working as you normally would. Handshake syncs the session automatically in the background every time the agent produces a response. There is nothing to run and no prompt to send.
+    Open any supported agent; Claude Code, OpenCode, Hermes, Codex, or Cursor and start working as you normally would. Handshake syncs the session automatically in the background every time the agent produces a response. There is nothing to run and no prompt to send.
 
     You can see your checkpointed sessions from the terminal at any time:
 
