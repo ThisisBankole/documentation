@@ -1,0 +1,94 @@
+---
+title: "Project Knowledge"
+sidebarTitle: "Project Knowledge"
+description: "Handshake maintains a living project brief and repository map for every Git-aware project — deterministic facts written at checkpoint time, AI-authored documents kept fresh by your agents or a background writer."
+---
+
+Every time an agent checkpoints a session in a Git repository, Handshake records deterministic facts about the project: a checkpoint log, a git timeline, and size-limited per-file diffs. On top of those facts, agents author two living documents — a **project brief** (what the project is, where the work stands, what's decided, what's next) and a **repository map** (what each directory does, entry points, where to look first).
+
+The result: any agent that restores a session — or any human opening the folder — starts with an accurate, current picture of the project instead of reconstructing it from scratch.
+
+<Note>
+  Project knowledge is optional and configured during `handshake setup`. Everything is stored locally as plain markdown — see [where the files live](#reading-the-files-directly).
+</Note>
+
+---
+
+## How it stays fresh
+
+Handshake tracks a **facts revision** for each project — a counter that advances whenever a checkpoint records something material: a new commit, changed files, or a new handoff summary. Conversation-only checkpoints (nothing changed but time) do not advance it.
+
+The AI documents each declare the facts revision they were written against. When the facts move past them, they are marked stale, and two writers can refresh them:
+
+1. **The active agent writes first.** After a checkpoint leaves knowledge stale, Handshake asks the agent you're already working with to refresh both documents using the installed `knowledge-authoring` skill. This ask is rate-limited — at most once per cooldown window (one hour by default) — so it stays rare instead of interrupting every turn.
+2. **The background writer is the fallback.** If the active agent doesn't publish within a short grace period, Handshake runs the agent CLI you selected during setup (for example `claude`) in the background to author the documents silently.
+
+Publications are guarded: a document authored against an older facts revision is rejected, so a slow or stale agent can never overwrite current knowledge with an outdated picture.
+
+---
+
+## What the documents contain
+
+**Project brief** — purpose and current goal, completed and active work with verified results, constraints and settled decisions, immediate next steps and known risks.
+
+**Repository map** — major directories and their responsibilities, entry points and core data flow, build and test commands, and the areas most relevant to current work.
+
+Both are grounded in the deterministic factual bundle — concrete commits, files, and source-agent statements — and carry provenance frontmatter recording who generated them, from which facts revision, commit, and session.
+
+---
+
+## Setup and configuration
+
+The setup wizard offers project knowledge as part of `handshake setup`:
+
+```text
+Enable automatic writing? [y/N] y
+
+Choose a fallback writer:
+  1. claude (recommended)
+  2. codex
+  3. opencode
+  4. hermes
+```
+
+Settings live in `~/.handshake/authoring.json`:
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `false` | Whether the background writer runs at all |
+| `runner` | — | Which agent CLI authors documents in the background |
+| `debounce_seconds` | `60` | Grace period the active agent gets before the background writer starts |
+| `timeout_seconds` | `120` | Maximum time a background authoring run may take |
+| `retry_limit` | `3` | Background retries before giving up until the next checkpoint |
+| `agent_cooldown_seconds` | `3600` | Minimum gap between interruptions asking the active agent to refresh; `0` means never interrupt — background only |
+
+<Tip>
+  The background writer uses the selected agent's CLI with your existing authentication. No model runs while you are configuring the setting, and nothing runs at all when knowledge is current.
+</Tip>
+
+---
+
+## How agents use it
+
+When a session is restored through Handshake, the handoff brief includes a **Project Knowledge** section built from the current brief and map — so the receiving agent starts with project context in addition to the session's own history.
+
+Agents interact with the system through the `get_project_knowledge_context` and `publish_project_knowledge` [MCP tools](/reference/mcp-tools), guided by the `knowledge-authoring` skill that Handshake installs into each agent during setup.
+
+---
+
+## Reading the files directly
+
+The whole bundle is plain markdown with YAML frontmatter, following Google's [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/) — readable with any editor, `cat`, or a tool like Obsidian (the files cross-link, so they render as a navigable graph):
+
+```text
+~/.handshake/knowledge/<project-id>/
+├── index.md          # start here — links to everything below
+├── project-brief.md  # AI-authored brief
+├── repo-map.md       # AI-authored repository map
+├── log.md            # checkpoint log (deterministic)
+├── git-timeline.md   # git timeline (deterministic)
+├── diffs/            # bounded per-snapshot diffs
+└── sessions/         # per-session timelines
+```
+
+Session transcripts are never exported into the bundle, and sensitive or generated paths are omitted from diffs and recorded as omitted in each diff index.

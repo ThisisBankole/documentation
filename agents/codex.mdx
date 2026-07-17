@@ -34,6 +34,10 @@ handshake setup
 The wizard registers the MCP server entry in `~/.codex/config.toml`, installs the three hook scripts into `~/.codex/hooks/`, and registers them in `~/.codex/hooks.json`. If a config file already exists it is backed up before being modified.
 
 <Note>
+  **Using the ChatGPT desktop app?** You don't need the `codex` CLI on your PATH. Handshake detects Codex through the `~/.codex` directory or the ChatGPT/Codex app bundle, and the desktop app, CLI, and IDE extension all share the same configuration — so registration works for all of them at once. If your Codex home lives elsewhere, set `CODEX_HOME` before running setup.
+</Note>
+
+<Note>
   After setup, open Codex and run `/hooks` to trust the Handshake hook scripts. Codex requires explicit trust before executing hook commands.
 </Note>
 

@@ -1,20 +1,22 @@
 ---
 title: "Privacy"
 sidebarTitle: "Privacy"
-description: "Handshake stores all session data locally on your machine in a SQLite database. No telemetry, no cloud sync, and no accounts of any kind."
+description: "All session data stays on your machine in a local SQLite database. Handshake makes two small outbound calls — a weekly release check and an anonymous usage ping — both documented here, and the ping can be disabled."
 ---
 
-Handshake is designed from the ground up to keep your session data on your machine. There are no accounts, no cloud sync, and no telemetry of any kind. The daemon binds to localhost only and never makes outbound connections. Your conversations stay on your hardware.
+Handshake is designed to keep your session data on your machine. There are no accounts and no cloud sync. Your conversations, checkpoints, and project knowledge are stored locally, and the daemon binds to localhost only.
+
+Handshake does make two narrow outbound connections — a weekly release check and an anonymous usage ping — described in full below. The ping can be switched off with a single environment variable.
 
 <Note>
-  No cloud. No accounts. No data leaving your machine.
+  No accounts. No cloud sync. Session content never leaves your machine.
 </Note>
 
 ---
 
 ## What Is Stored
 
-Handshake writes two types of data to your machine:
+Handshake writes three types of data to your machine:
 
 **Session database** — stored at `~/.handshake/sessions.db` (SQLite). Each checkpointed session contains:
 
@@ -24,7 +26,9 @@ Handshake writes two types of data to your machine:
 - An optional handoff summary and decisions written by the checkpointing agent
 - A git state snapshot (branch, commit hash, dirty files) captured at checkpoint time
 
-**Agent registration files** — Handshake adds itself as an MCP server to each agent's config file during setup. The exact file location varies by agent. These entries point to `http://localhost:8765/mcp` (or whichever port you configured).
+**Project knowledge bundle** — stored at `~/.handshake/knowledge/<project-id>/` as plain markdown files: checkpoint and git timelines, size-limited per-file diffs, and the AI-authored project brief and repository map. Session transcripts are never exported into the bundle, and sensitive or generated paths are omitted from diffs and recorded as omitted. See the [Project Knowledge guide](/guides/project-knowledge).
+
+**Agent registration files** — Handshake adds itself as an MCP server to each agent's config file during setup. These entries point to `http://localhost:8765/mcp` (or whichever port you configured).
 
 Handshake **does not** store API keys, credentials, or auth tokens of any kind.
 
@@ -34,19 +38,43 @@ Handshake **does not** store API keys, credentials, or auth tokens of any kind.
 
 The Handshake daemon binds exclusively to `localhost:8765`. It is not accessible from the network — only processes on your own machine can connect to it.
 
-Handshake makes **no outbound connections**. It never contacts external servers, sends usage data, or checks for updates over the network. Once installed, it operates entirely offline.
+Handshake makes exactly two kinds of outbound connections:
+
+**Release check** — the daemon asks GitHub about once a week whether a newer Handshake release exists, so it can show an update notice. The request contains no session or project data.
+
+**Anonymous usage ping** — to count installs and active versions, Handshake sends two anonymous events to PostHog (EU region):
+
+- `handshake_installed` — sent once, when the interactive setup wizard completes for the first time on a machine. Contains the Handshake version, operating system, architecture, and the names of detected agents (e.g. `claude-code`, `codex`).
+- `handshake_heartbeat` — sent alongside the weekly release check while the daemon runs. Contains the version, operating system, and architecture.
+
+Events are keyed by a random per-machine ID stored at `~/.handshake/telemetry_id`. No session content, message text, project names, file paths, git data, or account information is ever sent. PostHog derives coarse city-level location from the request IP on arrival; the IP itself is not stored by Handshake. Non-interactive installs (CI, scripts) send nothing.
+
+### Opting out
+
+Set one environment variable and every ping is disabled — including creation of the ID file:
+
+```bash
+export HANDSHAKE_NO_TELEMETRY=1
+```
+
+Local builds compiled from source have telemetry disabled entirely.
+
+If the background [project knowledge writer](/guides/project-knowledge) is enabled, it runs the agent CLI you selected (for example `claude`), which connects to that agent's provider using your existing account. Handshake itself sends nothing in that flow; it is disabled unless you enable it during setup.
 
 ---
 
 ## Data Location
 
-All session data is stored in a single SQLite file:
+All session data is stored under one directory:
 
 ```text
-~/.handshake/sessions.db
+~/.handshake/sessions.db     # session database (SQLite)
+~/.handshake/knowledge/      # per-project knowledge bundles (markdown)
+~/.handshake/telemetry_id    # random anonymous ID (absent if opted out)
+~/.handshake/authoring.json  # background writer settings, if enabled
 ```
 
-This is a standard SQLite database. You can back up or migrate it with any SQLite-compatible tool:
+The database is standard SQLite. You can back up or migrate it with any SQLite-compatible tool:
 
 ```bash
 # Copy to a backup
@@ -69,7 +97,7 @@ Handshake will ask:
 Delete session database? Your session history will be lost. [y/N]
 ```
 
-Answer `y` to delete `~/.handshake/` and everything in it.
+Answer `y` to delete `~/.handshake/` and everything in it — including the knowledge bundles and the anonymous telemetry ID.
 
 Alternatively, delete the directory manually at any time — Handshake does not re-create it until the next `handshake init` or `handshake setup` run:
 
