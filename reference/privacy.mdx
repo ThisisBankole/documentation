@@ -40,9 +40,13 @@ The Handshake daemon binds exclusively to `localhost:8765`. It is not accessible
 
 Handshake makes exactly two kinds of outbound connections:
 
-**Release check** — the daemon asks GitHub about once a week whether a newer Handshake release exists, so it can show an update notice. The request contains no session or project data.
+### Release check
 
-**Anonymous usage ping** — to count installs and active versions, Handshake sends two anonymous events to PostHog (EU region):
+The daemon asks GitHub about once a week whether a newer Handshake release exists, so it can show an update notice. The request contains no session or project data.
+
+### Anonymous usage ping
+
+To count installs and active versions, Handshake sends two anonymous events to PostHog (EU region):
 
 - `handshake_installed` — sent once, when the interactive setup wizard completes for the first time on a machine. Contains the Handshake version, operating system, architecture, and the names of detected agents (e.g. `claude-code`, `codex`).
 - `handshake_heartbeat` — sent alongside the weekly release check while the daemon runs. Contains the version, operating system, and architecture.
